@@ -1,0 +1,44 @@
+{
+  "base_url": "http://127.0.0.1:8080",
+  "variables": {
+    "token": "replace-with-real-token",
+    "tenant_id": "demo-tenant",
+    "user_id": 10001
+  },
+  "default_headers": {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer {{token}}",
+    "X-Tenant-Id": "{{tenant_id}}"
+  },
+  "cases": [
+    {
+      "name": "get user detail",
+      "method": "GET",
+      "path": "/api/users/{{user_id}}",
+      "headers": {},
+      "query": {},
+      "body": null,
+      "expected_status": 200,
+      "expected_contains": [
+        "\"code\": 0",
+        "\"id\": 10001"
+      ]
+    },
+    {
+      "name": "create order",
+      "method": "POST",
+      "path": "/api/orders",
+      "headers": {},
+      "query": {},
+      "body": {
+        "userId": "{{user_id}}",
+        "skuCode": "SKU-001",
+        "count": 1
+      },
+      "expected_status": 200,
+      "expected_contains": [
+        "\"success\": true"
+      ]
+    }
+  ]
+}
