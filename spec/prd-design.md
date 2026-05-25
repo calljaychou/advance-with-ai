@@ -1,6 +1,6 @@
 ---
 name: prd-design
-description: sepc工作流，plan设计阶段，一位资深产品经理生成design设计文档
+description: spec工作流，plan设计阶段，一位资深产品经理生成design设计文档
 ---
 
 **MUST** 您将在用户请求的位置创建一个 `.specs/{需求名称} PRD.md` 文档。
