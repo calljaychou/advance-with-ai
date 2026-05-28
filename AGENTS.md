@@ -22,6 +22,8 @@
 简单逻辑采用简化控制器：将单一请求处理逻辑（例如，“获取单个用户信息”“返回静态数据”）直接在控制器方法中实现。避免过度分层。
 复杂逻辑使用服务层：涉及业务规则和跨数据源交互的复杂逻辑（例如，“订单创建 + 库存扣减 + 通知”）必须拆分到服务层。使控制器仅负责 “请求接收 - 参数验证 - 响应封装”。
 
+不要过度封装方法，若业功能致，也保持同意的方法使用，优先使用已有的SDK方法：如Date类型解析与格式化使用 hutool `DateUtil` 工具类
+
 ### 编码规范
 - 当入参已通过 JSR-380 注解完成基础校验（非空、范围、长度、枚举等）时，Service 层禁止重复做同类参数校验；Service 层仅保留业务校验（如存在性、唯一性、权限、并发冲突、状态机约束）
 
@@ -29,9 +31,9 @@
   内部API使用Params/Result 后缀命名，例如，`UserGetParams`、`UserGetResult`;
   外部API使用Request/Response 后缀命名，例如，`UserGetRequest`、`UserGetResponse`;
 
-- private方法必须添加方法描述，代码行中核心的方法调用应添加简要明了的注释描述，但一个过多添加，比如一行一个注释
+- private方法必须添加方法描述，代码行中核心的方法调用应添加简要明了的注释描述 `// 业务约定....`，但不要过度添加，比如一行一个注释
 
-- 关键业务需要增加日志的打印，合理使用`log.ingo`、`log.error`、`log.warn`
+- 关键业务需要增加日志的打印，合理使用`log.ingo`、`log.error`、`log.warn` 输出关键内容：`log.info("订单支付,请求3方,orderNo:{}\nreqesut:{}",data.orderNo,data.toJSONString())`
 
 - 关于方法的命名规范：
 
@@ -42,10 +44,12 @@
   校验类使用`validate...()`
 
   业务核心方法使用`...core()`
+  
+  API出入参DTO的创建使用 `build...()`
 
 ### 使用swagger注解
 
-- 所有接口都必须有对应的swagger注解，包括请求参数、响应参数、异常信息等
+- 所有接口都必须有对应的swagger注解，包括请求参数、响应参数
 
 ### Kotlin语法
 
@@ -64,8 +68,19 @@ val refunds = refundMapper.select {
     and { RefundDynamicSqlSupport.Refund.status isNotEqualTo ISVRefundStatus.PRE.name }
 }
 
+// 错误案例
 val roleIds = userRoleRelMapper.select {
-    where { UserRoleRelDynamicSqlSupport.UserRoleRel.userId isEqualTo user.id!! }
+  where { UserRoleRelDynamicSqlSupport.UserRoleRel.userId isEqualTo user.id!! }
+  if(status != null){
+    and { UserRoleRelDynamicSqlSupport.UserRoleRel.status isEqualTo status!! }
+  }
+}
+
+// 正确使用
+val roleIds = userRoleRelMapper.select {
+  where { UserRoleRelDynamicSqlSupport.UserRoleRel.userId isEqualTo user.id!! }
+  and { UserRoleRelDynamicSqlSupport.UserRoleRel.status isEqualToWhenPresent status }
+  and { UserRoleRelDynamicSqlSupport.UserRoleRel.name isLikeWhenPresent name?.ifBlank{ null }?.let{ "%it%" } }
 }
 
 ```
