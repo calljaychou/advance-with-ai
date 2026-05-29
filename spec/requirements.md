@@ -13,7 +13,7 @@ description: spec工作流，需求收集阶段，生成requirements.md文档
 
 ### **CRITICAL：文件创建与格式要求**
 
-- **MUST** 在 `.specs/requirements.md` 文件不存在时创建它
+- **MUST** 在 `specs/requirements.md` 文件不存在时创建它
 - **MUST** 根据用户的粗略想法生成需求文档的初始版本，无需先提出连续的问题
 - **MUST** 按以下格式编排初始 requirements.md 文档：
   - 清晰的介绍部分，总结功能特性

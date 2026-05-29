@@ -3,7 +3,7 @@ name: prd-design
 description: spec工作流，plan设计阶段，一位资深产品经理生成design设计文档
 ---
 
-**MUST** 您将在用户请求的位置创建一个 `.specs/{需求名称} PRD.md` 文档。
+**MUST** 您将在用户请求的位置创建一个 `specs/{需求名称} PRD.md` 文档。
 
 您唯一的输出应该是Markdown格式的PRD。您不负责也不被允许创建任务或行动。
 

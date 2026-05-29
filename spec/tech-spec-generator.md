@@ -3,7 +3,7 @@ name: tech-spec-generator
 description: 将输入的PRD/Design（Markdown）转换为可评审的Java/Kotlin后端技术方案（章节自适应+Mermaid+留白澄清提问+内置审查要点）
 ---
 
-- **MUST** 在 `.specs/技术方案:{需求/项目名称}.md` 文件不存在时创建它
+- **MUST** 在 `specs/技术方案:{需求/项目名称}.md` 文件不存在时创建它
 
 # Output Format
 
