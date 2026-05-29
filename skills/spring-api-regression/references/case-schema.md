@@ -1,6 +1,6 @@
-# 用例数据结构说明
+# 内嵌用例数据结构说明
 
-在生成或扩展 `test_cases.json` 时，使用本文档作为字段说明。
+在生成或扩展 `regression_api_test.py` 中的 `TEST_CONFIG` 时，使用本文档作为字段说明。默认不再生成独立的 `test_cases.json` 文件。
 
 ## 顶层字段
 
@@ -36,22 +36,22 @@
 
 - 一个用例只表达一个业务场景，避免职责过多
 - 认证信息、租户信息等公共数据优先放在顶层 `variables`
-- 较大的请求体内容放在 `body` 中，不要写死在 Python 脚本里
+- 较大的请求体内容放在 `body` 中，保持 JSON-like Python 字典结构，避免拆散到执行逻辑里
 - 默认使用 `expected_contains` 做轻量回归校验，便于维护
 - 如果是共享环境，默认避免新增、修改、删除等破坏性请求
 
 ## 示例
 
-```json
+```python
 {
   "name": "query order detail",
   "method": "GET",
   "path": "/api/orders/{{order_id}}",
   "headers": {},
   "query": {
-    "verbose": true
+    "verbose": True
   },
-  "body": null,
+  "body": None,
   "variables": {
     "order_id": "SO202605200001"
   },

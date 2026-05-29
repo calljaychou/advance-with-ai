@@ -1,6 +1,6 @@
 ---
 name: spring-api-regression
-description: Create Python-based API regression test scripts for Spring Web or Spring MVC projects when the user wants to avoid or supplement MockMvc tests, build readable API replay scenarios, externalize mock data for easy replacement, or print complete request and response payloads for debugging and review. Use this skill whenever the user mentions Spring Web regression testing, MockMvc limitations, Python API scripts, interface replay, API smoke checks, or readable request/response logs.
+description: Create Python-based API regression test scripts for Spring Web or Spring MVC projects when the user wants to avoid or supplement MockMvc tests, build readable API replay scenarios, keep mock request data inline in the Python runner, or print complete request and response payloads for debugging and review. Use this skill whenever the user mentions Spring Web regression testing, MockMvc limitations, Python API scripts, interface replay, API smoke checks, or readable request/response logs.
 ---
 
 # Spring API Regression
@@ -10,7 +10,7 @@ Use this skill to generate a lightweight regression testing package for Spring W
 This skill is best when the user wants:
 
 - A Python script that can replay HTTP requests against a running local service or a remote test environment
-- Mock request data stored outside the script and easy to replace in bulk
+- Mock request data stored in an inline Python configuration and easy to replace in one file
 - Complete and readable request and response logs for debugging, comparison, and review
 - A low-coupling regression path that is less tied to Spring test context, database fixtures, or `MockMvc` behavior
 
@@ -28,7 +28,7 @@ Use this skill when any of the following is true:
 - The user wants to test HTTP interfaces from outside the application process
 - The user wants Python scripts to mock API requests or replay regression scenarios
 - The user wants request and response payloads printed in full for troubleshooting
-- The user wants mock data separated from code so that scenarios are easy to read and replace
+- The user wants mock data grouped in a clear inline configuration so that scenarios are easy to read and replace
 
 ## First Step
 
@@ -47,26 +47,25 @@ If information is missing, ask concise follow-up questions before writing the sc
 Unless the user asks for a different shape, generate:
 
 - `regression_api_test.py`: the main Python runner
-- `test_cases.json`: externalized mock data and request definitions
 - `README.md` or short usage notes when execution steps need explanation
 
 Keep names descriptive and stable. Prefer `snake_case` for Python files and variables.
 
 ## Script Design Rules
 
-### 1. Separate Mock Data From Logic
+### 1. Keep Mock Data Inline But Structured
 
-Put request scenarios, headers, path, query, body, and simple expectations in `test_cases.json`.
+Put request scenarios, headers, path, query, body, and simple expectations in the `TEST_CONFIG` dictionary near the top of `regression_api_test.py`.
 
 The Python script should focus on:
 
-- Loading configuration
+- Reading inline configuration
 - Replacing placeholders
 - Sending HTTP requests
 - Printing readable logs
 - Summarizing pass or fail
 
-Do not hardcode large request bodies inside Python unless the user explicitly requests inline data.
+Keep request bodies as readable Python dictionaries and lists. Do not generate a separate `test_cases.json` file unless the user explicitly asks for externalized data.
 
 ### 2. Keep Mock Data Clear And Replaceable
 
@@ -87,7 +86,7 @@ Each case should usually include:
 - `expected_status`
 - `expected_contains` or another lightweight expectation field when useful
 
-Prefer JSON examples that can be replaced by copy-paste with minimal Python changes.
+Prefer JSON-like Python literals that can be replaced by copy-paste with minimal Python changes.
 
 ### 3. Print Full Request And Response
 
@@ -129,8 +128,8 @@ When this skill is triggered, follow this order:
 
 1. Confirm missing environment and endpoint information
 2. Decide whether the deliverable is script-only or script plus usage notes
-3. Generate `test_cases.json` first so the scenarios are visible to the user
-4. Generate `regression_api_test.py` against that JSON structure
+3. Generate `regression_api_test.py` with a visible `TEST_CONFIG` dictionary near the top
+4. Keep the runner functions aligned with that inline configuration structure
 5. Ensure logs print full request and response content in a readable way
 6. Explain how to replace mock data, switch environments, and extend cases
 
@@ -138,7 +137,6 @@ When this skill is triggered, follow this order:
 
 When generating the Python file, prefer this structure:
 
-- `load_test_cases()`
 - `replace_placeholders()`
 - `build_url()`
 - `send_case()`
@@ -153,10 +151,15 @@ Keep helper functions small and descriptive.
 
 Use obvious visual sections, for example:
 
-- `========== CASE START ==========`
-- `---------- REQUEST ----------`
-- `---------- RESPONSE ----------`
-- `========== CASE END ==========`
+```
+    ========== CASE START ==========
+    case name
+    ========== CASE START ==========
+    🍀REQUEST
+    🍀RESPONSE
+    CASS ✅通过/❌失败
+    ========== CASE END ============
+```
 
 If the response is JSON, pretty-print with indentation and preserve non-ASCII characters when present.
 
@@ -176,7 +179,7 @@ User intent: "MockMvc 覆盖不住联调场景，帮我写 Python 回归脚本�
 Expected result:
 
 - A Python runner using `requests`
-- A separate JSON file for cases
+- Inline `TEST_CONFIG` data for cases
 - Complete request and response logs
 - Notes explaining where to replace token, host, and request body
 
@@ -188,7 +191,7 @@ Expected result:
 
 - Environment-aware base URL handling
 - Shared headers and variables
-- Multiple cases in one JSON file
+- Multiple cases in the inline `TEST_CONFIG` dictionary
 - Simple status and body fragment checks
 
 ## Bundled Resources
@@ -196,5 +199,4 @@ Expected result:
 If needed, read these bundled files before generating output:
 
 - `templates/regression_api_test.py`
-- `templates/test_cases.json`
 - `references/case-schema.md`

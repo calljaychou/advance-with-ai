@@ -4,20 +4,57 @@
 from __future__ import annotations
 
 import json
-import sys
-from pathlib import Path
 from typing import Any
 
 import requests
 
 
-CASE_FILE = Path(__file__).with_name("test_cases.json")
 TIMEOUT_SECONDS = 30
 
-
-def load_test_cases(case_file: Path) -> dict[str, Any]:
-    """Load the JSON case definition file."""
-    return json.loads(case_file.read_text(encoding="utf-8"))
+TEST_CONFIG: dict[str, Any] = {
+    "base_url": "http://127.0.0.1:8080",
+    "variables": {
+        "token": "replace-with-real-token",
+        "tenant_id": "demo-tenant",
+        "user_id": 10001,
+    },
+    "default_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {{token}}",
+        "X-Tenant-Id": "{{tenant_id}}",
+    },
+    "cases": [
+        {
+            "name": "get user detail",
+            "method": "GET",
+            "path": "/api/users/{{user_id}}",
+            "headers": {},
+            "query": {},
+            "body": None,
+            "expected_status": 200,
+            "expected_contains": [
+                "\"code\": 0",
+                "\"id\": 10001",
+            ],
+        },
+        {
+            "name": "create order",
+            "method": "POST",
+            "path": "/api/orders",
+            "headers": {},
+            "query": {},
+            "body": {
+                "userId": "{{user_id}}",
+                "skuCode": "SKU-001",
+                "count": 1,
+            },
+            "expected_status": 200,
+            "expected_contains": [
+                "\"success\": true",
+            ],
+        },
+    ],
+}
 
 
 def replace_placeholders(value: Any, variables: dict[str, Any]) -> Any:
@@ -55,7 +92,8 @@ def print_request_log(case_name: str, method: str, url: str, headers: dict[str, 
     """Print the final request payload after placeholder replacement."""
     print("========== CASE START ==========")
     print(f"CASE: {case_name}")
-    print("---------- REQUEST ----------")
+    print("========== CASE START ==========")
+    print("🍀 REQUEST")
     print(f"METHOD: {method}")
     print(f"URL: {url}")
     print("HEADERS:")
@@ -71,7 +109,7 @@ def print_request_log(case_name: str, method: str, url: str, headers: dict[str, 
 
 def print_response_log(response: requests.Response) -> None:
     """Print the response in a readable way for debugging and comparison."""
-    print("---------- RESPONSE ----------")
+    print("🍀 RESPONSE")
     print(f"STATUS: {response.status_code}")
     print("HEADERS:")
     print(pretty_json(dict(response.headers)))
@@ -130,12 +168,8 @@ def evaluate_case(case: dict[str, Any], response: requests.Response) -> tuple[bo
 
 
 def main() -> int:
-    """Run all API regression cases from the external JSON file."""
-    if not CASE_FILE.exists():
-        print(f"case file not found: {CASE_FILE}", file=sys.stderr)
-        return 1
-
-    config = load_test_cases(CASE_FILE)
+    """Run all API regression cases from the inline test configuration."""
+    config = TEST_CONFIG
     base_url = config["base_url"]
     default_headers = config.get("default_headers", {})
     global_variables = config.get("variables", {})
@@ -156,9 +190,9 @@ def main() -> int:
             passed, reasons = evaluate_case(case, response)
             if passed:
                 success_count += 1
-                print(f"[PASS] {case['name']}")
+                print(f"✅[PASS] {case['name']}")
             else:
-                print(f"[FAIL] {case['name']}")
+                print(f"❌[FAIL] {case['name']}")
                 for reason in reasons:
                     print(f"  - {reason}")
             print()
