@@ -7,13 +7,13 @@
 安装：
 
 ```bash
-bash scripts/install.sh
+bash install.sh
 ```
 
 卸载：
 
 ```bash
-bash scripts/uninstall.sh
+bash uninstall.sh
 ```
 
 
