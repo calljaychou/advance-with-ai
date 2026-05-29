@@ -66,6 +66,7 @@
 val refunds = refundMapper.select {
     where { RefundDynamicSqlSupport.Refund.tid isEqualTo orderNo }
     and { RefundDynamicSqlSupport.Refund.status isNotEqualTo ISVRefundStatus.PRE.name }
+  and { RefundDynamicSqlSupport.Refund.flag.isNull() }
 }
 
 // 错误案例
