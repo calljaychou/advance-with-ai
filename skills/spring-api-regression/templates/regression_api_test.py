@@ -190,9 +190,9 @@ def main() -> int:
             passed, reasons = evaluate_case(case, response)
             if passed:
                 success_count += 1
-                print(f"✅[PASS] {case['name']}")
+                print(f"✅ [PASS] {case['name']}")
             else:
-                print(f"❌[FAIL] {case['name']}")
+                print(f"❌ [FAIL] {case['name']}")
                 for reason in reasons:
                     print(f"  - {reason}")
             print()

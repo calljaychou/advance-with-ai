@@ -2,7 +2,11 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+if [ -d "$SCRIPT_DIR/skills" ] || [ -d "$SCRIPT_DIR/coding" ] || [ -d "$SCRIPT_DIR/spec" ]; then
+    REPO_ROOT="$SCRIPT_DIR"
+else
+    REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+fi
 
 log_info() {
     printf '[advance-with-ai] %s\n' "$*"

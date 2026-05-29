@@ -2,7 +2,11 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+if [ -d "$SCRIPT_DIR/skills" ] || [ -d "$SCRIPT_DIR/coding" ] || [ -d "$SCRIPT_DIR/spec" ]; then
+    REPO_ROOT="$SCRIPT_DIR"
+else
+    REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+fi
 
 log_info() {
     printf '[advance-with-ai] %s\n' "$*"
@@ -102,7 +106,7 @@ uninstall_skills_from() {
 
     if [ -L "$target_root" ]; then
         remove_path "$target_root"
-        log_info "✅已卸载 1 个 skills -> $target_root"
+        log_info "✅ 已卸载 1 个 skills -> $target_root"
         log_items "$target_root"
         return 0
     fi
@@ -117,7 +121,7 @@ uninstall_skills_from() {
         fi
     done
 
-    log_info "✅已卸载 ${#removed_skills[@]} 个 skills -> $target_root"
+    log_info "✅ 已卸载 ${#removed_skills[@]} 个 skills -> $target_root"
     [ "${#removed_skills[@]}" -eq 0 ] || log_items "${removed_skills[@]}"
 }
 
@@ -141,7 +145,7 @@ uninstall_workflows_from() {
         fi
     done
 
-    log_info "✅已卸载 ${#removed_workflows[@]} 个 workflows -> $target_root"
+    log_info "✅ 已卸载 ${#removed_workflows[@]} 个 workflows -> $target_root"
     [ "${#removed_workflows[@]}" -eq 0 ] || log_items "${removed_workflows[@]}"
 }
 
@@ -150,7 +154,7 @@ uninstall_codex() {
 
     uninstall_skills_from "$codex_home/skills"
     uninstall_workflows_from "$codex_home/prompts"
-    log_info "✅codex uninstall completed"
+    log_info "✅ codex uninstall completed"
 }
 
 uninstall_claude() {
@@ -158,7 +162,7 @@ uninstall_claude() {
 
     uninstall_skills_from "$claude_home/skills"
     uninstall_workflows_from "$claude_home/commands"
-    log_info "✅claude uninstall completed"
+    log_info "✅ claude uninstall completed"
 }
 
 uninstall_tool() {
