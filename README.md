@@ -2,24 +2,20 @@
 
 ## Shell 脚本说明
 
-本仓库提供两套安装脚本：
+### 一键脚本
 
-- `install.sh`：根目录一键安装脚本，会自动检测已安装的 IDE，并安装到对应目录。
-- `scripts/*.sh`：按指定工具安装或卸载，目前支持 `codex`、`claude`。
-
-### 根目录一键脚本
-
-执行安装：
+安装：
 
 ```bash
-bash install.sh
+bash scripts/install.sh
 ```
 
-执行卸载：
+卸载：
 
 ```bash
-bash install.sh uninstall
+bash scripts/uninstall.sh
 ```
+
 
 安装规则：
 
@@ -34,49 +30,6 @@ bash install.sh uninstall
 - skills：只删除本仓库对应的同名 skill 目录。
 - 不会删除整个 IDE 配置目录。
 
-### 指定工具脚本
-
-安装 Codex：
-
-```bash
-bash scripts/install.sh codex
-```
-
-安装 Claude：
-
-```bash
-bash scripts/install.sh claude
-```
-
-同时安装 Codex 和 Claude：
-
-```bash
-bash scripts/install.sh codex,claude
-```
-
-卸载 Codex：
-
-```bash
-bash scripts/uninstall.sh codex
-```
-
-卸载 Claude：
-
-```bash
-bash scripts/uninstall.sh claude
-```
-
-同时卸载 Codex 和 Claude：
-
-```bash
-bash scripts/uninstall.sh codex,claude
-```
-
-指定工具脚本会对工具参数做标准化处理，支持中文逗号、英文逗号、大小写混用和空格，例如：
-
-```bash
-bash scripts/install.sh "Codex, Claude"
-```
 
 ### Codex 与 Claude 安装路径
 
