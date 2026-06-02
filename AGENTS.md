@@ -63,6 +63,7 @@
 - 禁止使用 selectMany
 - 禁止使用 isInWhenPresent
 - 使用 `where{}`、`and{}` 而非 `where()`、`and()`
+- 名称相关条件筛选需要支持like 使用 `name?.ifBlank{ null }?.let{ "%it%" }`
 
 ```kotlin
 val refunds = refundMapper.select {
