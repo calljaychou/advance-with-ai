@@ -31,6 +31,8 @@
   内部API使用Params/Result 后缀命名，例如，`UserGetParams`、`UserGetResult`;
   外部API使用Request/Response 后缀命名，例如，`UserGetRequest`、`UserGetResponse`;
 
+- 查询API（列表查询等）入参若出现类型、状态相关条件优先考虑使用枚举类型接收，减少service层冗余的类型校验
+
 - private方法必须添加方法描述，代码行中核心的方法调用应添加简要明了的注释描述 `// 业务约定....`，但不要过度添加，比如一行一个注释
 
 - 关键业务需要增加日志的打印，合理使用`log.ingo`、`log.error`、`log.warn` 输出关键内容：`log.info("订单支付,请求3方,orderNo:{}\nreqesut:{}",data.orderNo,data.toJSONString())`
