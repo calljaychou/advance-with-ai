@@ -1,0 +1,20 @@
+[
+  {
+    "dbName": "youzan-pousheng",
+    "method": "查询订单是否推送成功，若失败失败原因是什么",
+    "resultValidate": "获取到的rows有数据或数量size大于1",
+    "statement": "SELECT * FROM order_sync_log WHERE biz_value='{订单号}' AND sync_status = 1"
+  },
+  {
+    "dbName": "youzan-pousheng",
+    "method": "查询退款是否推送成功，若失败失败原因是什么",
+    "resultValidate": "获取到的rows有数据或数量size大于1",
+    "statement": "SELECT * FROM refund_sync_log WHERE biz_value='{退款单号}' AND sync_status = 1"
+  },
+  {
+    "dbName": "youzan-pousheng",
+    "method": "查询退款回告是否处理成功，若失败失败原因是什么",
+    "resultValidate": "获取到的rows有数据或数量size大于1",
+    "statement": "SELECT * FROM refund_sync_log WHERE biz_value='{退款单号}' AND status = 1"
+  }
+]

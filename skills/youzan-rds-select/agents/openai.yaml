@@ -1,0 +1,6 @@
+interface:
+  display_name: "Youzan RDS Select"
+  short_description: "匹配有赞项目并执行 RDS SELECT 查询"
+  default_prompt: "Use $youzan-rds-select to query whether an order sync record exists in Youzan RDS."
+policy:
+  allow_implicit_invocation: true
