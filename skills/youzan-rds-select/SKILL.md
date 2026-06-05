@@ -62,12 +62,13 @@ skills/youzan-rds-select/scripts/youzan_rds_select.sh \
 
 1. 如果返回 `code=400` 且 `msg` 或 `message` 为 `登录失效`，说明 sid 已失效。提示用户重新访问 `https://account.youzan.com/login` 登录，并从 Cookie 获取新的 `sid`。
 2. 如果返回 `code=700200034`，且提示 `table [...] not exist or offline`，说明当前项目 mapping 很可能不正确。让用户重新提供项目关键词或补充正确项目名称。
-3. 如果 `success=false` 或 HTTP 请求失败，说明接口调用失败。返回错误码、错误消息和建议动作。
-4. 如果查询成功，读取 `data[0].result.rows`：
+3. 如果返回 `code=:700200053` 且  `msg` 或 `message` 为 `无权访问`, 说明 选择的 bizInsId 有误或者库有误。
+4. 如果 `success=false` 或 HTTP 请求失败，说明接口调用失败。返回错误码、错误消息和建议动作。
+5. 如果查询成功，读取 `data[0].result.rows`：
    - 第一行通常是列名。
    - 第二行开始是数据行。
    - `rows` 数量大于等于 2 表示至少存在一条业务数据。
-5. 根据命中的方法模板中的 `resultValidate` 给出判断。模板中写 `获取到的rows数量大于等一1` 时，按“数据行数量大于等于 1”理解，即 `rows.size >= 2`。
+6. 根据命中的方法模板中的 `resultValidate` 给出判断。模板中写 `获取到的rows数量大于等一1` 时，按“数据行数量大于等于 1”理解，即 `rows.size >= 2`。
 
 ## 返回格式
 
