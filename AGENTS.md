@@ -64,6 +64,9 @@
 - 禁止使用 isInWhenPresent
 - 使用 `where{}`、`and{}` 而非 `where()`、`and()`
 - 名称相关条件筛选需要支持like 使用 `name?.ifBlank{ null }?.let{ "%it%" }`
+- 自定义SQL时创建xxxMapperExt继承xxxMapper使用
+- 除 `IFNULL()`、`SUM()`、`COUNT()`、`CONCAT()` 外，减少SQL中的函数方法，用时需要进行原因描述
+- 查询列表时非必要不要进行join查询，而是先获取到列表关键数据再进行in查询到代码层面进行聚合
 
 ```kotlin
 val refunds = refundMapper.select {
@@ -88,6 +91,10 @@ val roleIds = userRoleRelMapper.select {
 }
 
 ```
+
+## 测试与验证
+
+不要自行使用nvm 或其他构建运行命令，若开发者主动说明需要回归验证，则进行代码静态扫描和验证脚本，待用户自行运行验证
 
 ## 沟通与反馈
 
