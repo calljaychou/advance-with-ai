@@ -1,0 +1,4 @@
+interface:
+  display_name: "Init Kotlin Project"
+  short_description: "Initialize Youzan/Qingyan Kotlin Spring projects."
+  default_prompt: "初始化一个有赞/轻研 Kotlin Spring 项目"
