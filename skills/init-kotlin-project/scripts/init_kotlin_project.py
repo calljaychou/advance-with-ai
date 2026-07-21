@@ -8,6 +8,493 @@ from pathlib import Path
 from typing import Optional
 
 
+DEFAULT_QY_EXTENSION_VERSION = "0.0.8-SNAPSHOT"
+
+
+AGENTS_TEMPLATE = """# AGENTS
+本文件用于指导 AI Agent 处理当前代码仓库内的项目代码。
+
+## 有赞云定制有容器开发
+有赞云定制开发面向有技术能力的商家或服务商，围绕店铺、商品、订单、会员、营销等业务场景，通过开放 API、消息和扩展点，把有赞
+店铺与商家自有系统打通，承载个性化商城页面、后端业务流程和行业解决方案。项目通常分为无容器和有容器两类：有容器可在有赞云 PaaS 
+环境中开发自用型定制能力，如定制 H5、小程序页面和业务流程。开发过程中必须严格 遵守店铺授权、能力包权限和数据使用边界，
+仅在已授权店铺范围内处理数据，不做跨主体聚合或未经授权的数据共享；自用型有容器应用按有赞云接入流程创建，通常需要对应的大客技术套餐和平台授权。
+
+
+## 项目概述
+
+**技术栈**：
+- 后端：Java 8 + Kotlin 1.8.0、Spring Boot、有赞云基座（cloud-parent 1.1.3-RELEASE）
+- 数据库：MySQL，持久层框架 MyBatis 3.5.11
+- 缓存：Redis，客户端 Redisson 3.16.8
+- 前端：React 18 + Vite 5 + TypeScript（后台管理主面板）、Zent UI（商家云应用）、微信小程序
+
+## 整体架构说明
+
+### 后端目录结构
+
+后端为Java + Kotlin 混合开发 Spring Boot 应用：
+
+```plaintext
+__WEB_MODULE__/src/main/
+├── java/                                     # Java 入口类 & 有赞扩展包装层
+│   └── com/youzan/cloud/__PROJECT_NAME__/
+│       ├── __PROJECT_CLASS_NAME__Application.java               # Spring Boot 程序启动入口
+│       └── open/youzan/extension/            # 有赞扩展点实现包装类
+└── kotlin/                                   # Kotlin 源码（核心业务逻辑层）
+    └── com/youzan/cloud/__PROJECT_NAME__/
+        ├── controller/                       # REST 接口控制器
+        │   ├── admin/                        # 商家后台管理接口
+        │   ├── client/                       # C端用户访问接口
+        │   ├── open/                         # 对外开放接口
+        │   ├── script/                       # 脚本执行接口
+        │   ├── common/                       # 通用接口
+        │   └── task/                         # 定时任务管控接口
+        ├── service/                          # 业务逻辑层
+        ├── dal/                              # 数据访问层
+        │   ├── mapper/                       # MyBatis 数据库映射
+        │   └── model/                        # 数据库实体模型
+        ├── youzanopen/                       # 有赞开放能力对接模块
+        │   ├── extension/                    # 有赞平台扩展逻辑实现
+        │   ├── message/                      # 有赞平台事件消息处理器
+        │   └── api/                          # 有赞开放API调用客户端
+        ├── thirdside/                        # 三方系统能力对接模块
+        └── common/                           # 通用工具类、全局配置
+```
+
+### 前端目录结构
+
+
+## Guide
+"""
+
+
+PROJECT_PACKAGE_DIRS = (
+    "common",
+    "common/annotation",
+    "common/config",
+    "controller",
+    "dal",
+    "dal/mapper",
+    "dal/model",
+    "model",
+    "service",
+    "thirdside",
+    "youzanopen",
+    "youzanopen/api",
+    "youzanopen/extension",
+    "youzanopen/message",
+)
+
+
+COMMON_FILE_TEMPLATES = {
+    "common/Extensions.kt": """package __PACKAGE__.common
+
+import cn.hutool.core.util.ZipUtil
+import com.youzan.cloud.metadata.common.OutParam
+import java.nio.charset.StandardCharsets
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
+
+/**
+ * OutParam 成功构造返回
+ *
+ * @param data 返回数据
+ */
+fun <T> OutParam<T>.success(data: T) = apply {
+    this.data = data
+    this.success = true
+    this.code = "200"
+}
+
+fun <T> OutParam<T>.fail(data: T, message: String, code: Int) = apply {
+    this.success = false
+    this.code = code.toString()
+    this.message = message
+    this.data = data.apply { }
+}
+
+/**
+ * 序列化 压缩json
+ */
+fun serialize(json: String): String {
+    val gzip = ZipUtil.gzip(json.toByteArray())
+    return String(gzip, StandardCharsets.ISO_8859_1)
+}
+
+fun String.gzip() = serialize(this)
+
+/**
+ * 解压
+ */
+fun deserialize(serialized: String): String {
+    val unzip = ZipUtil.unGzip(serialized.toByteArray(StandardCharsets.ISO_8859_1))
+    return String(unzip)
+}
+
+fun String.unGzip() = deserialize(this)
+
+/**
+ * 火星坐标系 (GCJ-02) 与百度坐标系 (BD-09) 的转换算法 将 GCJ-02 坐标转换成 BD-09 坐标
+ *
+ * @param lat
+ * @param lng
+ * @return object
+ */
+fun gcjToBaidu(lng: Double, lat: Double): Pair<Double, Double> {
+    val delta = (Math.PI * 3000.0) / 180.0
+    val z = sqrt(lng * lng + lat * lat) + 0.00002 * sin(lat * delta)
+    val theta = atan2(lat, lng) + 0.000003 * cos(lng * delta)
+    val baiduLng = z * cos(theta) + 0.0065
+    val baiduLat = z * sin(theta) + 0.006
+    return Pair(baiduLng, baiduLat)
+}
+
+/**
+ * * 火星坐标系 (GCJ-02) 与百度坐标系 (BD-09) 的转换算法 * * 将 BD-09 坐标转换成GCJ-02 坐标
+ * @param [lng] lng
+ * @param [lat] lat
+ * @return [Pair<Double, Double>]
+ */
+fun baiduToGcj(lng: Double, lat: Double): Pair<Double, Double> {
+    val delta = (Math.PI * 3000.0) / 180.0
+    val x = lng - 0.0065
+    val y = lat - 0.006
+    val z = sqrt(x * x + y * y) - 0.00002 * sin(y * delta)
+    val theta = atan2(y, x) - 0.000003 * cos(x * delta)
+    val gcjLng = z * cos(theta)
+    val gcjLat = z * sin(theta)
+    return Pair(gcjLng, gcjLat)
+}
+""",
+    "common/annotation/ExcludeResultHandler.kt": """package __PACKAGE__.common.annotation
+
+/**
+ * @author JayCHou <a href="calljaychou@qq.com">Email</a>
+ */
+annotation class ExcludeResultHandler
+""",
+    "common/config/CORSConfig.kt": """package __PACKAGE__.common.config
+
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
+import org.springframework.web.filter.CorsFilter
+
+@Configuration
+class CORSConfig {
+    @Bean
+    fun corsFilter(): CorsFilter {
+        val config = CorsConfiguration()
+        config.addAllowedOrigin("*")
+        //是否发送Cookie信息
+        config.allowCredentials = true
+        //放行哪些原始域(请求方式)
+        config.addAllowedMethod("*")
+        //放行哪些原始域(头部信息)
+        config.addAllowedHeader("*")
+
+        //2.添加映射路径
+        val configSource = UrlBasedCorsConfigurationSource()
+        configSource.registerCorsConfiguration("/**", config)
+
+        return CorsFilter(configSource)
+    }
+}
+""",
+    "common/config/Env.kt": """package __PACKAGE__.common.config
+
+import org.springframework.stereotype.Component
+
+@Component
+class Env {
+
+
+
+}
+""",
+    "common/config/GlobalControllerExceptionHandler.kt": """package __PACKAGE__.common.config
+
+import cn.dev33.satoken.exception.SaTokenException
+import cn.dev33.satoken.oauth2.exception.SaOAuth2Exception
+import com.qingyan.extension.auth.manage.ManageAuthPermissionException
+import com.qingyan.extension.exception.BizException
+import com.qingyan.extension.exception.YzApiException
+import com.qingyan.extension.extension.logger
+import com.qingyan.extension.model.vo.ApiResult
+import io.swagger.annotations.ApiOperation
+import org.springframework.http.HttpStatus
+import org.springframework.validation.BindException
+import org.springframework.web.bind.MethodArgumentNotValidException
+import org.springframework.web.bind.MissingServletRequestParameterException
+import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.ResponseStatus
+import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.method.HandlerMethod
+
+@RestControllerAdvice
+class GlobalControllerExceptionHandler {
+
+    private val log = logger()
+
+    private fun getExtLogInfo(handlerMethod: HandlerMethod): String {
+        val apiOperation = handlerMethod.getMethodAnnotation(ApiOperation::class.java)
+        val exiLogInfo = if (apiOperation != null) {
+            "接口[${apiOperation.value}], "
+        } else "接口[${handlerMethod.method.declaringClass.typeName}.${handlerMethod.method.name}], "
+        return exiLogInfo
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    @ResponseStatus(value = HttpStatus.OK)
+    fun methodArgumentNotValidExceptionHandler(
+        exception: MethodArgumentNotValidException,
+        handlerMethod: HandlerMethod
+    ): Any? {
+        log.error("${getExtLogInfo(handlerMethod)}全局参数异常捕获", exception)
+        return ApiResult.fail<Unit>(
+            400,
+            exception.bindingResult.fieldErrors.firstOrNull()?.defaultMessage ?: "参数异常"
+        )
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException::class)
+    @ResponseStatus(value = HttpStatus.OK)
+    fun missingServletRequestParameterExceptionHandler(
+        exception: MissingServletRequestParameterException,
+        handlerMethod: HandlerMethod
+    ): Any? {
+        log.error("${getExtLogInfo(handlerMethod)}缺少必填参数", exception)
+        return ApiResult.fail<Unit>(400, "缺少必填参数: ${exception.parameterName}")
+    }
+
+    @ExceptionHandler(BindException::class)
+    @ResponseStatus(value = HttpStatus.OK)
+    fun bindExceptionHandler(exception: BindException, handlerMethod: HandlerMethod): Any? {
+        log.error("${getExtLogInfo(handlerMethod)}全局参数异常捕获", exception)
+        return ApiResult.fail<Unit>(
+            400,
+            exception.bindingResult.fieldErrors.firstOrNull()?.defaultMessage ?: "参数异常"
+        )
+    }
+
+    @ExceptionHandler(SaOAuth2Exception::class)
+    @ResponseStatus(value = HttpStatus.OK)
+    fun saOAuth2ExceptionHandler(exception: SaOAuth2Exception, handlerMethod: HandlerMethod): Any? {
+        log.error("${getExtLogInfo(handlerMethod)}SaOAuth2异常捕获", exception)
+        return ApiResult.fail<Unit>(exception.code, exception.message)
+    }
+
+    @ExceptionHandler(SaTokenException::class)
+    @ResponseStatus(value = HttpStatus.OK)
+    fun saTokenExceptionHandler(exception: SaTokenException, handlerMethod: HandlerMethod): Any? {
+        log.error("${getExtLogInfo(handlerMethod)}SaToken异常捕获", exception)
+        return ApiResult.fail<Unit>(exception.code, exception.message)
+    }
+
+    @ExceptionHandler(Exception::class)
+    @ResponseStatus(value = HttpStatus.OK)
+    fun exceptionHandler(exception: Exception, handlerMethod: HandlerMethod): Any? {
+        log.error("${getExtLogInfo(handlerMethod)}全局异常捕获", exception)
+        return ApiResult.fail<Unit>(500, "系统繁忙，请稍后重试")
+    }
+
+    @ExceptionHandler(IllegalArgumentException::class)
+    @ResponseStatus(value = HttpStatus.OK)
+    fun argumentExceptionHandler(exception: IllegalArgumentException, handlerMethod: HandlerMethod): Any? {
+        log.error("${getExtLogInfo(handlerMethod)}参数异常捕获", exception)
+        return ApiResult.fail<Unit>(400, exception.message)
+    }
+
+    @ExceptionHandler(BizException::class)
+    @ResponseStatus(value = HttpStatus.OK)
+    fun bizExceptionHandler(exception: BizException, handlerMethod: HandlerMethod): Any? {
+        log.error("${getExtLogInfo(handlerMethod)}业务异常捕获", exception)
+        return ApiResult.fail<Unit>(exception.code, exception.message)
+    }
+
+    @ExceptionHandler(YzApiException::class)
+    @ResponseStatus(value = HttpStatus.OK)
+    fun bizExceptionHandler(exception: YzApiException, handlerMethod: HandlerMethod): Any? {
+        log.error("${getExtLogInfo(handlerMethod)}有赞API异常捕获", exception)
+        return ApiResult.fail<Unit>(exception.code, exception.message)
+    }
+
+    @ExceptionHandler(IllegalStateException::class)
+    @ResponseStatus(value = HttpStatus.OK)
+    fun illegalStateExceptionHandler(exception: IllegalStateException, handlerMethod: HandlerMethod): Any? {
+        log.error("${getExtLogInfo(handlerMethod)}数据校验异常", exception)
+        return ApiResult.fail<Unit>(400, exception.message)
+    }
+
+    @ExceptionHandler(ManageAuthPermissionException::class)
+    @ResponseStatus(value = HttpStatus.OK)
+    fun manageAuthPermissionExceptionHandler(exception: ManageAuthPermissionException, handlerMethod: HandlerMethod): Any? {
+        log.error("${getExtLogInfo(handlerMethod)}数据鉴权异常", exception)
+        return ApiResult.fail<Unit>(401, exception.message)
+    }
+
+}
+""",
+    "common/config/GlobalControllerResponseHandler.kt": """package __PACKAGE__.common.config
+
+import com.qingyan.extension.model.vo.ApiResult
+import __PACKAGE__.common.annotation.ExcludeResultHandler
+import org.springframework.core.MethodParameter
+import org.springframework.core.io.InputStreamResource
+import org.springframework.http.MediaType
+import org.springframework.http.converter.HttpMessageConverter
+import org.springframework.http.server.ServerHttpRequest
+import org.springframework.http.server.ServerHttpResponse
+import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice
+
+/**
+ * response 包装器
+ * 禁止范围为全局，必须指定basePackages
+ */
+@RestControllerAdvice(basePackages = [\"com.youzan.cloud.__PROJECT_NAME__.controller\"])
+class GlobalControllerResponseHandler : ResponseBodyAdvice<Any?> {
+
+    override fun supports(returnType: MethodParameter, converterType: Class<out HttpMessageConverter<*>>) =
+        returnType.method?.isAnnotationPresent(
+            ExcludeResultHandler::class.java
+        ) == false
+
+    override fun beforeBodyWrite(
+        body: Any?,
+        returnType: MethodParameter,
+        selectedContentType: MediaType,
+        selectedConverterType: Class<out HttpMessageConverter<*>>,
+        request: ServerHttpRequest,
+        response: ServerHttpResponse,
+    ): Any? {
+        return if (body is String || body is ApiResult<*> || body is InputStreamResource) body else ApiResult.success(
+            body
+        )
+    }
+}
+""",
+    "common/config/SwaggerConfig.kt": """package __PACKAGE__.common.config
+
+import com.google.common.base.Predicates
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import springfox.documentation.builders.ApiInfoBuilder
+import springfox.documentation.builders.PathSelectors
+import springfox.documentation.builders.RequestHandlerSelectors
+import springfox.documentation.spi.DocumentationType
+import springfox.documentation.spring.web.plugins.Docket
+import springfox.documentation.swagger2.annotations.EnableSwagger2
+
+@Configuration
+@EnableSwagger2
+@ConditionalOnProperty(name = ["swagger.enable"], havingValue = "true")
+class SwaggerConfig {
+
+    private val host = "__PROJECT_NAME__.isv-dev.youzan.com"
+
+    @Bean
+    fun scheduledDocket(): Docket? {
+        return Docket(DocumentationType.SWAGGER_2)
+            .groupName("定时任务端")
+            .apiInfo(
+                ApiInfoBuilder()
+                    .title("定时任务端接口文档")
+                    .version("v1.0")
+                    .description("定时任务端接口文档")
+                    .build()
+            )
+            .host(host)
+            .select() //指定接口的位置
+            .apis(RequestHandlerSelectors.basePackage("__PACKAGE__"))
+            .paths(Predicates.or(PathSelectors.ant("/api/v1/scheduled/**")))
+            .build()
+    }
+
+
+    @Bean
+    fun openDocket(): Docket? {
+        return Docket(DocumentationType.SWAGGER_2)
+            .groupName("开放端")
+            .apiInfo(
+                ApiInfoBuilder()
+                    .title("接口文档")
+                    .version("v1.0")
+                    .description("接口文档")
+                    .build()
+            )
+            .host(host)
+            .select() //指定接口的位置
+            .apis(RequestHandlerSelectors.basePackage("__PACKAGE__"))
+            .paths(Predicates.or(PathSelectors.ant("/open/v1/**")))
+            .build()
+    }
+
+    @Bean
+    fun adminDocket(): Docket? {
+        return Docket(DocumentationType.SWAGGER_2)
+            .groupName("B端")
+            .apiInfo(
+                ApiInfoBuilder()
+                    .title("接口文档")
+                    .version("v1.0")
+                    .description("接口文档")
+                    .build()
+            )
+            .host(host)
+            .select() //指定接口的位置
+            .apis(RequestHandlerSelectors.basePackage("__PACKAGE__"))
+            .paths(Predicates.or(PathSelectors.ant("/api/v1/admin/**")))
+            .build()
+    }
+
+    @Bean
+    fun clientDocket(): Docket? {
+        return Docket(DocumentationType.SWAGGER_2)
+            .groupName("C端")
+            .apiInfo(
+                ApiInfoBuilder()
+                    .title("接口文档")
+                    .version("v1.0")
+                    .description("接口文档")
+                    .build()
+            )
+            .host(host)
+            .select() //指定接口的位置
+            .apis(RequestHandlerSelectors.basePackage("__PACKAGE__"))
+            .paths(Predicates.or(PathSelectors.ant("/api/v1/client/**")))
+            .build()
+    }
+
+    @Bean
+    fun commonDocket(): Docket? {
+        return Docket(DocumentationType.SWAGGER_2)
+            .groupName("通用")
+            .apiInfo(
+                ApiInfoBuilder()
+                    .title("接口文档")
+                    .version("v1.0")
+                    .description("接口文档")
+                    .build()
+            )
+            .host(host)
+            .select() //指定接口的位置
+            .apis(RequestHandlerSelectors.basePackage("__PACKAGE__"))
+            .paths(Predicates.or(PathSelectors.ant("/api/v1/common/**")))
+            .build()
+    }
+
+
+}
+""",
+}
+
+
 ROOT_POM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 \txsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -352,9 +839,21 @@ def write_text(path: Path, text: str, dry_run: bool, changed: list[str]) -> None
         path.write_text(text, encoding="utf-8")
 
 
-def prompt(value: Optional[str], label: str, secret: bool = False) -> str:
-    if value:
-        return value
+def write_text_if_absent(path: Path, text: str, dry_run: bool, changed: list[str]) -> None:
+    if path.exists():
+        return
+    changed.append(str(path))
+    if not dry_run:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+
+def prompt(value: Optional[str], label: str, secret: bool = False, default: Optional[str] = None) -> str:
+    if value and value.strip():
+        return value.strip()
+    if default is not None:
+        answer = input(f"{label} [{default}]: ").strip()
+        return answer or default
     if secret:
         import getpass
         return getpass.getpass(f"{label}: ").strip()
@@ -396,6 +895,45 @@ def detect_web_module(root: Path, project_name: str, explicit: Optional[str]) ->
     if len(modules) == 1:
         return modules[0]
     return expected
+
+
+def create_dir_if_absent(path: Path, dry_run: bool, changed: list[str]) -> None:
+    if path.exists():
+        return
+    changed.append(str(path))
+    if not dry_run:
+        path.mkdir(parents=True, exist_ok=True)
+
+
+def build_common_file_text(template: str, project_name: str) -> str:
+    package_name = f"com.youzan.cloud.{project_name}"
+    return template.replace("__PACKAGE__", package_name).replace("__PROJECT_NAME__", project_name)
+
+
+def build_project_class_name(project_name: str) -> str:
+    parts = [part for part in re.split(r"[^A-Za-z0-9]+", project_name) if part]
+    return "".join(part[:1].upper() + part[1:] for part in parts) or "Application"
+
+
+def build_agents_text(project_name: str, web_module: str) -> str:
+    return (
+        AGENTS_TEMPLATE
+        .replace("__PROJECT_NAME__", project_name)
+        .replace("__PROJECT_CLASS_NAME__", build_project_class_name(project_name))
+        .replace("__WEB_MODULE__", web_module)
+    )
+
+
+def create_project_scaffold(kotlin_package: Path, project_name: str, dry_run: bool, changed: list[str]) -> None:
+    for relative_dir in PROJECT_PACKAGE_DIRS:
+        create_dir_if_absent(kotlin_package / relative_dir, dry_run, changed)
+    for relative_file, template in COMMON_FILE_TEMPLATES.items():
+        write_text_if_absent(
+            kotlin_package / relative_file,
+            build_common_file_text(template, project_name),
+            dry_run,
+            changed,
+        )
 
 
 def env_block(project_name: str, client_id: str, client_secret: str, mysql_username: str, mysql_password: str) -> str:
@@ -452,6 +990,21 @@ def update_env(root: Path, block: str, dry_run: bool, changed: list[str]) -> Non
     write_text(path, text, dry_run, changed)
 
 
+def create_vibe_coding_workspace(root: Path, project_name: str, web_module: str, dry_run: bool, changed: list[str]) -> None:
+    for doc_dir in (root / "docs/PRDs", root / "docs/RFCs", root / "docs/Plans"):
+        if not doc_dir.exists():
+            changed.append(str(doc_dir))
+            if not dry_run:
+                doc_dir.mkdir(parents=True, exist_ok=True)
+    write_text_if_absent(root / "AGENTS.md", build_agents_text(project_name, web_module), dry_run, changed)
+
+
+def print_changed_paths(changed: list[str]) -> None:
+    print("Changed paths:" if changed else "No changes.")
+    for item in changed:
+        print(f"- {item}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Initialize a Youzan/Qingyan Kotlin Spring Maven project.")
     parser.add_argument("--project-root", default=".", help="Project root directory.")
@@ -462,6 +1015,7 @@ def main() -> int:
     parser.add_argument("--mysql-username", help="Local MySQL username.")
     parser.add_argument("--mysql-password", help="Local MySQL password.")
     parser.add_argument("--qy-extension-version", help="com.qingyan:youzan-extension version.")
+    parser.add_argument("--create-vibe-coding-workspace", action="store_true", help="Only create docs/PRDs, docs/RFCs, docs/Plans, and root AGENTS.md.")
     parser.add_argument("--dry-run", action="store_true", help="Print planned changes without writing.")
     args = parser.parse_args()
 
@@ -469,6 +1023,14 @@ def main() -> int:
     if not (root / "pom.xml").exists():
         print(f"error: pom.xml not found under {root}", file=sys.stderr)
         return 2
+
+    changed: list[str] = []
+    if args.create_vibe_coding_workspace:
+        project_name = detect_project_name(root, args.project_name)
+        web_module = detect_web_module(root, project_name, args.web_module)
+        create_vibe_coding_workspace(root, project_name, web_module, args.dry_run, changed)
+        print_changed_paths(changed)
+        return 0
 
     project_name = detect_project_name(root, args.project_name)
     web_module = detect_web_module(root, project_name, args.web_module)
@@ -478,9 +1040,8 @@ def main() -> int:
     client_secret = prompt(args.client_secret, "application clientSecret", secret=True)
     mysql_username = prompt(args.mysql_username, "local MySQL username")
     mysql_password = prompt(args.mysql_password, "local MySQL password", secret=True)
-    qy_extension_version = prompt(args.qy_extension_version, "QY extension package version")
+    qy_extension_version = args.qy_extension_version.strip() if args.qy_extension_version else DEFAULT_QY_EXTENSION_VERSION
 
-    changed: list[str] = []
     root_xml = read_text(root / "pom.xml")
     root_parent = find_parent(root_xml)
     root_group = find_own_tag(root_xml, "groupId") or "com.youzan.cloud"
@@ -534,10 +1095,8 @@ def main() -> int:
             shutil.rmtree(java_web_package)
 
     kotlin_package = web_root / "src/main/kotlin/com/youzan/cloud" / project_name
-    if not kotlin_package.exists():
-        changed.append(str(kotlin_package))
-        if not args.dry_run:
-            kotlin_package.mkdir(parents=True, exist_ok=True)
+    create_dir_if_absent(kotlin_package, args.dry_run, changed)
+    create_project_scaffold(kotlin_package, project_name, args.dry_run, changed)
 
     update_env(
         root,
@@ -557,15 +1116,7 @@ def main() -> int:
         changed,
     )
 
-    for doc_dir in (root / "docs/PRDs", root / "docs/RFCs", root / "docs/Plans"):
-        if not doc_dir.exists():
-            changed.append(str(doc_dir))
-            if not args.dry_run:
-                doc_dir.mkdir(parents=True, exist_ok=True)
-
-    print("Changed paths:" if changed else "No changes.")
-    for item in changed:
-        print(f"- {item}")
+    print_changed_paths(changed)
     return 0
 
 
