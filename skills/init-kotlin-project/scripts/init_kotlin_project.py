@@ -666,6 +666,12 @@ WEB_POM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 \t\t\t<groupId>com.youzan.boot</groupId>
 \t\t\t<artifactId>youzan-boot-starter-mybatis</artifactId>
 \t\t</dependency>
+\t\t<!--指定mybatis版本，解决youzan低版本与dynamic-sql不兼容问题-->
+\t\t<dependency>
+\t\t\t<groupId>org.mybatis</groupId>
+\t\t\t<artifactId>mybatis</artifactId>
+\t\t\t<version>3.5.11</version>
+\t\t</dependency>
 \t\t<dependency>
 \t\t\t<groupId>com.youzan.cloud.boot</groupId>
 \t\t\t<artifactId>cloud-boot-starter-idempotent</artifactId>
