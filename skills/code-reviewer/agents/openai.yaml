@@ -1,0 +1,6 @@
+interface:
+  display_name: "代码审查"
+  short_description: "聚焦变更证据、影响面与可执行建议的中文代码质量审查"
+  default_prompt: "使用 $code-reviewer 审查当前代码变更，并输出中文代码质量审查报告。"
+policy:
+  allow_implicit_invocation: true
