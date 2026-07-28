@@ -791,10 +791,12 @@ GENERATOR_TEMPLATE = """<!DOCTYPE generatorConfiguration PUBLIC
 
     <context id="kotlin" targetRuntime="MyBatis3Kotlin">
         <jdbcConnection driverClass="com.mysql.cj.jdbc.Driver"
-                        connectionURL="jdbc:mysql://localhost:3306/youzan-pousheng?
+                        connectionURL="jdbc:mysql://localhost:3306/{project_name}?
                   characterEncoding=utf8&amp;useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;allowPublicKeyRetrieval=true"
                         userId="{mysql_username}"
-                        password="{mysql_password}"/>
+                        password="{mysql_password}">
+            <property name="nullCatalogMeansCurrent" value="true"/>
+        </jdbcConnection>
 
         <javaModelGenerator targetPackage="com.youzan.cloud.youzan.{project_name}.dal.model" targetProject="src/main/kotlin"/>
         <javaClientGenerator targetPackage="com.youzan.cloud.youzan.{project_name}.dal.mapper"
