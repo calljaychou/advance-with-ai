@@ -53,6 +53,13 @@ The top-level structure is:
     "labels": {
       "<field_name>": "<business label in the user's language>"
     },
+    "response_envelope": {
+      "wrapper": "<fully.qualified.ResponseWrapper>",
+      "fields": ["code", "success", "message", "timestamp", "data"],
+      "success_when": "success == true",
+      "http_status": "always 200 — every handler of the project's global exception advice returns @ResponseStatus(HttpStatus.OK), so transport status and process exit code never reflect the business outcome"
+    },
+    "sort_rule": "<normalized path, HTTP method, handler>",
     "interfaces": [
       {
         "key": 1,
@@ -69,7 +76,10 @@ The top-level structure is:
           "resolved_from": "annotation-default|config-file|env-var|apollo"
         },
         "parameters": [],
-        "invocation": {}
+        "response": {
+          "returns": "<void|Unit|ResponseType>",
+          "data": "<null when the handler returns nothing; otherwise what the payload carries>"
+        }
       }
     ]
   }
@@ -86,6 +96,10 @@ The top-level structure is:
 
 `parameters` is grouped by location (`headers`, `body`, ...). Each leaf is a short string such as `"string, required"`. A leaf may instead be an object (`{"type": "string", "required": true, "example": "R123"}`) when an example value is worth keeping; the invocation sentence uses `example` when present and the literal `<值>` otherwise.
 
+`response_envelope` describes how every interface in the project shapes its reply, and is what makes the outcome judgeable at all. Record the wrapper type, its fields, and — critically — the rule that decides success. When the project's global exception advice forces `@ResponseStatus(HttpStatus.OK)` onto failures, say so in `http_status`: it means the transport status and the process exit code carry **no** information, and only `success`/`code` may be used. Never leave a reader free to assume transport-level signals mean anything here.
+
+`response` records what one interface actually hands back. A handler whose return type is `void`/`Unit` produces no business payload — record that, so the report says "only a processing result" instead of presenting an empty `data` as missing information. When the handler returns a type, record it, because that payload is the only way to verify what the call really did. Also record when a handler discards a meaningful internal return value (a `Boolean` the controller drops, for example): such an interface can report success while the business action never took effect.
+
 Do not reuse keys across different project indexes for the same chat. When rediscovery changes the set, renumber the complete sorted list from 1 and tell the user that the keys were refreshed.
 
 ## Procedure
@@ -93,7 +107,7 @@ Do not reuse keys across different project indexes for the same chat. When redis
 1. **Resolve the chat key.** Obtain the current group chat ID from the platform context or tool output. If only a display name is available, stop and ask for the stable chat ID; never silently use a name.
 2. **Resolve the project path and controller root.** Confirm the project path exists with a shell command. Locate the controller directory directly, prioritizing conventional paths such as `<project>/youzan-pousheng-web/src/main/kotlin/**/controller`, `<project>/src/main/kotlin/**/controller`, and `<project>/src/main/java/**/controller`. Once found, scan only that controller directory and its descendants. Do not scan the whole repository or generated frontend/vendor/build directories. Preserve the user's project path exactly in reports.
 3. **Scan controller mappings.** Search file contents under the controller root with a narrow include filter for `*.kt`, `*.java`, and relevant route metadata only. Search `RequestMapping`, `GetMapping`, `PostMapping`, `PutMapping`, `DeleteMapping`, and `PatchMapping`, then read only the matching controller files. Retain only mappings whose effective route is `/script` or begins with `/script/`; combine class-level and method-level mappings, including HTTP method annotations and path arrays. Record source file and line when available. If a project uses a configured global prefix, preserve the actual route and document the prefix.
-4. **Determine the effective contract.** For every interface, identify HTTP method, complete path, handler, required/optional parameters, parameter location (path/query/header/body), types, defaults, enum constraints, and a safe example. Read DTOs, annotations, validators, route metadata, and nearby documentation as needed. Mark unknown fields as `unknown`; never infer them from parameter names alone. Settle authentication here too, once: does the handler check a credential, where must it be sent, and which property supplies it. Follow that reference down its chain (`@Value` default → `application.properties` / `.ENV` / `app.yaml` → environment variable → Apollo) and record the layer that wins in `auth.resolved_from`, plus a `note` if any layer could not be checked. Record the property name, never the secret value. Doing this at discovery is what lets invocation proceed without ever asking the user about auth.
+4. **Determine the effective contract.** For every interface, identify HTTP method, complete path, handler, required/optional parameters, parameter location (path/query/header/body), types, defaults, enum constraints, and a safe example. Read DTOs, annotations, validators, route metadata, and nearby documentation as needed. Mark unknown fields as `unknown`; never infer them from parameter names alone. Settle authentication here too, once: does the handler check a credential, where must it be sent, and which property supplies it. Follow that reference down its chain (`@Value` default → `application.properties` / `.ENV` / `app.yaml` → environment variable → Apollo) and record the layer that wins in `auth.resolved_from`, plus a `note` if any layer could not be checked. Record the property name, never the secret value. Doing this at discovery is what lets invocation proceed without ever asking the user about auth. Determine the response shape in the same pass: the wrapper the project applies, the field rule that decides success, and what this particular handler returns. If the project pins failures to HTTP 200, record that verbatim rather than assuming a conventional status code. If the handler's own return value is discarded by the controller, record it — otherwise a success envelope will be over-read.
 5. **Explain before calling, invocation sentence included.** Present a compact numbered list sorted by the stable `key`. For each item show method, path, purpose, required parameters, optional parameters, and an example input shape. Then close **every item** with a ready-to-send invocation sentence, so the user can trigger it by chatting instead of composing an HTTP request:
 
    ```text
@@ -120,8 +134,8 @@ Do not reuse keys across different project indexes for the same chat. When redis
 
    Confirm the project path matches the requested context. If the key is absent or stale, rediscover before calling. If the user specifies a path instead, match it exactly against the current index; do not fuzzy-match silently. Ask for any required parameter the sentence omitted; never invent a value. Never ask about authentication.
 9. **Validate call inputs.** Check all required arguments, types, enum values, path variables, body shape, and environment selection against the discovered contract, and check the resolved credential against `auth`. Ask only for missing information that cannot be obtained from context — authentication is never such information. Redact secrets in logs and feedback.
-10. **Invoke the interface.** Use the project's documented command or HTTP invocation through the shell, with the resolved environment-specific base URL. When `auth.required` is true, resolve `auth.secret_ref` through its chain and inject `auth.name` silently — never echo the value into the report, the transcript, or a log line. Set the remaining fields explicitly. Do not use destructive or externally visible operations without the user's explicit request and any required confirmation. Capture exit code, stdout, stderr, HTTP status, and response body.
-11. **Report outcome.** State the selected key, method/path, and whether the call succeeded. Define success from the actual contract: normally exit code 0 plus a successful HTTP status and/or explicit response success field. Include the relevant returned data, error message, and a concise next step. Never claim success from a command that timed out, returned an ambiguous response, or was not verified.
+10. **Invoke the interface.** Use the project's documented command or HTTP invocation through the shell, with the resolved environment-specific base URL. When `auth.required` is true, resolve `auth.secret_ref` through its chain and inject `auth.name` silently — never echo the value into the report, the transcript, or a log line. Set the remaining fields explicitly. Do not use destructive or externally visible operations without the user's explicit request and any required confirmation. Capture exit code, stdout, stderr, HTTP status, and the response body — but treat only the envelope fields named by `response_envelope.success_when` as evidence, since `response_envelope.http_status` may pin the transport status to a success value even when the call failed.
+11. **Report outcome.** State the selected key, method/path, and whether the call succeeded. Judge success **only** by `response_envelope.success_when` — never by the process exit code or the HTTP status. Then be precise about what that success proves: when `response.returns` is `void`/`Unit`, say plainly that the interface returns **only a processing result**, so a success envelope means the handler did not throw and nothing more. Do not present an empty `data` as missing information, and do not claim the business action took effect — especially when the handler discards its own return value. When the handler returns a type, report the fields that actually evidence the outcome. Always include the envelope's `code` and `message` on failure, any genuinely relevant payload, and a concise next step. Never claim success from a command that timed out, returned an ambiguous response, or was not verified.
 
 ## Quick Reference
 
@@ -132,11 +146,13 @@ Do not reuse keys across different project indexes for the same chat. When redis
 - Invocation sentence: one line per item — `调用方式：你可以对我说「使用 <key> 号脚本，入参：<参数名>=<值>，环境 DEV/PROD」`; address by number, never by name, and take `<参数名>` from `labels`.
 - Environment clause: always present in the sentence; write the resolved value, or `DEV/PROD` to make the user choose. Never let the environment default silently.
 - Authentication: settled at discovery into `auth` and injected at invocation; never in the `入参` clause and never asked of the user.
+- Response: judge the outcome only by `response_envelope.success_when`; when `http_status` pins failures to 200, neither the transport status nor the process exit code is evidence.
+- Processing-result-only: when `response.returns` is `void`/`Unit` the envelope carries no business payload, so report "only a processing result" and never read an empty `data` as missing information.
 - Label lookup: `labels` maps field name → business label; reverse it to turn what the user says back into the real field name.
 - Environment: `DEV` → `https://youzan-pousheng.isv-dev.youzan.com`; `PROD` → `https://youzan-pousheng.isv.youzan.com` for Youzan Pousheng.
 - Environment profiles: fixed `environment` + `baseURL` pairs for `PROD` and `DEV`; select by `selected_environment`.
 - Cache: `<skills_dir>/script-interface-discovery/cache.json`, next to this `SKILL.md`.
-- Evidence: source file/line for discovery; environment source; exit code/status/body for invocation.
+- Evidence: source file/line for discovery; environment source; the response envelope's `code`/`success`/`message` for invocation — never the transport status alone.
 
 ## Sorting Rule
 
@@ -153,7 +169,9 @@ Sort interfaces deterministically by normalized path, then HTTP method, then han
 - A cached key is not proof that the endpoint still exists. Revalidate the source or route metadata when the project changes, the key is missing, or invocation fails with a route-not-found error.
 - Preserve secrets and authentication headers; never write tokens or full secret-bearing payloads to the cache.
 - `cache.json` holds chat identifiers and local project paths. It lives inside the installed skill directory and is overwritten by a reinstall; keep it out of unrelated backups or shares.
-- A successful process exit is not necessarily an application success. Inspect HTTP status and the response's success/error fields.
+- A successful process exit is not an application success, and neither is an HTTP 200: when the global exception advice pins failures to 200, only the response envelope's `success`/`code` decide the outcome.
+- Do not present an empty `data` as missing information. When `response.returns` is `void`/`Unit`, that emptiness is the contract itself — the call only yields a processing result.
+- A success envelope is not proof that the business action took effect when the handler discards its own return value. State what the evidence covers and what it does not.
 - The invocation sentence is a promise the skill can keep only if `labels` covers every parameter it names and `key` matches the index. Never print a raw field name (`tid`) in the sentence, and never reverse-map an ambiguous label without asking.
 - Never address an interface by name. `name` is a display label and may repeat; the number is the contract.
 - Never ask the user which endpoints need auth, and never ask for the credential. If an interface's `auth` is missing, that is a discovery gap: re-read the handler and fill it in.
@@ -162,6 +180,6 @@ Sort interfaces deterministically by normalized path, then HTTP method, then han
 
 ## Verification
 
-Before reporting discovery complete, verify that every listed item came from the controller root, has an effective `/script` path, a unique consecutive key, and a source or route-metadata reference. Verify that every interface carries an `auth` entry, that no `auth` entry stores a credential value, that every parameter named in an invocation sentence has a `labels` entry, that each presented item carries exactly one `调用方式` line ending in an environment clause, and that no such line leaks a raw field name or a credential. Verify the cache is valid JSON, indexed by the exact current chat ID, contains the `labels` map, and contains fixed `environments` entries with `environment` and `baseURL`, plus `selected_environment`.
+Before reporting discovery complete, verify that every listed item came from the controller root, has an effective `/script` path, a unique consecutive key, and a source or route-metadata reference. Verify that every interface carries an `auth` entry, that no `auth` entry stores a credential value, that every parameter named in an invocation sentence has a `labels` entry, that each presented item carries exactly one `调用方式` line ending in an environment clause, and that no such line leaks a raw field name or a credential. Verify the cache is valid JSON, indexed by the exact current chat ID, contains the `labels` map, contains a `response_envelope` whose `success_when` and `http_status` are stated explicitly, carries a `response` entry for every interface, and contains fixed `environments` entries with `environment` and `baseURL`, plus `selected_environment`.
 
-Before reporting a call complete, verify the invocation target matches the selected cache entry, the environment was resolved from the invocation sentence or an explicit instruction, the matching fixed `baseURL` was selected without editing the environment profiles, the credential came from `auth.secret_ref` and was never printed, the process finished without timeout, and the returned status/body supports the success or failure claim. If any check fails, report the uncertainty explicitly.
+Before reporting a call complete, verify the invocation target matches the selected cache entry, the environment was resolved from the invocation sentence or an explicit instruction, the matching fixed `baseURL` was selected without editing the environment profiles, the credential came from `auth.secret_ref` and was never printed, the process finished without timeout, success or failure was decided by `response_envelope.success_when` rather than by exit code or transport status, the report states whether the interface returns a payload or only a processing result, and the quoted envelope supports the claim. If any check fails, report the uncertainty explicitly.

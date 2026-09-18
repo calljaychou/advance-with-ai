@@ -32,6 +32,18 @@
       "actualQty": "实际退款数量",
       "shipmentCode": "宝胜发货单号"
     },
+    "response_envelope": {
+      "wrapper": "com.qingyan.extension.model.vo.ApiResult",
+      "fields": [
+        "code",
+        "success",
+        "message",
+        "timestamp",
+        "data"
+      ],
+      "success_when": "success == true",
+      "http_status": "always 200 - com.youzan.cloud.youzan.pousheng.common.config.GlobalControllerExceptionHandler annotates every handler with @ResponseStatus(HttpStatus.OK), so even a failure returns HTTP 200 and the curl exit code is always 0"
+    },
     "sort_rule": "normalized path, HTTP method, handler",
     "interfaces": [
       {
@@ -56,6 +68,11 @@
           "body": {
             "refundId": "string, required"
           }
+        },
+        "response": {
+          "returns": "Unit",
+          "data": null,
+          "note": "the controller discards the service result, so the envelope carries only a processing result"
         },
         "source": "youzan-pousheng-web/src/main/kotlin/com/youzan/cloud/youzan/pousheng/controller/script/CouponPackScriptController.kt:39-47"
       },
@@ -82,6 +99,11 @@
             "refundId": "string, required"
           }
         },
+        "response": {
+          "returns": "Unit",
+          "data": null,
+          "note": "the controller discards the service result, so the envelope carries only a processing result"
+        },
         "source": "youzan-pousheng-web/src/main/kotlin/com/youzan/cloud/youzan/pousheng/controller/script/CouponPackScriptController.kt:28-36"
       },
       {
@@ -101,6 +123,11 @@
             "max_pages": "integer, optional"
           }
         },
+        "response": {
+          "returns": "ItemBaseSearchSyncResponse",
+          "data": "paging/sync result from ItemScriptServiceImpl.syncByBaseSearch",
+          "note": "the only /script payload that evidences how much was synced"
+        },
         "source": "youzan-pousheng-web/src/main/kotlin/com/youzan/cloud/youzan/pousheng/controller/script/ItemScriptController.kt:24-30; ../model/request/ItemBaseSearchSyncRequest.kt:5-12"
       },
       {
@@ -114,6 +141,11 @@
           "required": false
         },
         "parameters": {},
+        "response": {
+          "returns": "ItemSkuActivityCheckSyncResponse",
+          "data": "counts from ItemSkuActivityCheckScriptServiceImpl.syncItemSkuActivityCheck",
+          "note": "the only /script payload that evidences how much was synced"
+        },
         "source": "youzan-pousheng-web/src/main/kotlin/com/youzan/cloud/youzan/pousheng/controller/script/ItemScriptController.kt:32-37"
       },
       {
@@ -132,6 +164,11 @@
             "ids": "string, required in practice; comma-separated goods IDs"
           }
         },
+        "response": {
+          "returns": "Unit",
+          "data": null,
+          "note": "the controller discards the service result, so the envelope carries only a processing result"
+        },
         "source": "youzan-pousheng-web/src/main/kotlin/com/youzan/cloud/youzan/pousheng/controller/script/ProtocolScriptController.kt:181-187; ../model/request/PointStoreGoodsParams.kt:69-75"
       },
       {
@@ -145,6 +182,11 @@
           "required": false
         },
         "parameters": {},
+        "response": {
+          "returns": "Unit",
+          "data": null,
+          "note": "the controller discards the service result, so the envelope carries only a processing result"
+        },
         "source": "youzan-pousheng-web/src/main/kotlin/com/youzan/cloud/youzan/pousheng/controller/script/ProtocolScriptController.kt:48-82"
       },
       {
@@ -158,6 +200,11 @@
           "required": false
         },
         "parameters": {},
+        "response": {
+          "returns": "Unit",
+          "data": null,
+          "note": "the controller discards the service result, so the envelope carries only a processing result"
+        },
         "source": "youzan-pousheng-web/src/main/kotlin/com/youzan/cloud/youzan/pousheng/controller/script/ProtocolScriptController.kt:139-179"
       },
       {
@@ -181,8 +228,13 @@
           },
           "body": {
             "tid": "string, required",
-            "memberId": "string, required"
+            "memberId": "string, optional; overrides the automatic iPass outOpenId lookup (iPassAPI.userMappingByOutInfo by yzOpenId), so omitting it is supported"
           }
+        },
+        "response": {
+          "returns": "Unit",
+          "data": null,
+          "note": "OrderService.push() returns Boolean (false when the trade is not pushable) but the controller discards it, so success:true does NOT prove the order was pushed to Pousheng"
         },
         "source": "youzan-pousheng-web/src/main/kotlin/com/youzan/cloud/youzan/pousheng/controller/script/TradeScriptController.kt:31-40"
       },
@@ -209,6 +261,11 @@
             "refundId": "string, required"
           }
         },
+        "response": {
+          "returns": "Unit",
+          "data": null,
+          "note": "the controller discards the service result, so the envelope carries only a processing result"
+        },
         "source": "youzan-pousheng-web/src/main/kotlin/com/youzan/cloud/youzan/pousheng/controller/script/TradeScriptController.kt:64-73"
       },
       {
@@ -233,6 +290,11 @@
           "body": {
             "refundId": "string, required"
           }
+        },
+        "response": {
+          "returns": "Unit",
+          "data": null,
+          "note": "the controller discards the service result, so the envelope carries only a processing result"
         },
         "source": "youzan-pousheng-web/src/main/kotlin/com/youzan/cloud/youzan/pousheng/controller/script/TradeScriptController.kt:42-51"
       },
@@ -259,6 +321,11 @@
             "refundId": "string, required",
             "eventTime": "date, required by handler usage"
           }
+        },
+        "response": {
+          "returns": "Unit",
+          "data": null,
+          "note": "the controller discards the service result, so the envelope carries only a processing result"
         },
         "source": "youzan-pousheng-web/src/main/kotlin/com/youzan/cloud/youzan/pousheng/controller/script/TradeScriptController.kt:53-62"
       },
@@ -287,6 +354,11 @@
             "status": "integer, required; 0=不可退, 1=部分可退, 2=全部可退",
             "skuList": "array, required; each item requires oid, planQty, actualQty and may contain shipmentCode"
           }
+        },
+        "response": {
+          "returns": "Unit",
+          "data": null,
+          "note": "the controller discards the service result, so the envelope carries only a processing result"
         },
         "source": "youzan-pousheng-web/src/main/kotlin/com/youzan/cloud/youzan/pousheng/controller/script/TradeScriptController.kt:75-87; ../model/request/TradeRequest.kt:127-167"
       }
