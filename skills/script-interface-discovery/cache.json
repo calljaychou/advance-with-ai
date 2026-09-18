@@ -41,6 +41,14 @@
         "path": "/api/v1/script/coupon-pack/refund/close",
         "handler": "CouponPackScriptController.refundClose",
         "summary": "券包退款关闭",
+        "auth": {
+          "required": true,
+          "location": "header",
+          "name": "Authorization",
+          "secret_ref": "script.secret",
+          "resolved_from": "annotation-default",
+          "note": "no override found in application.properties/.ENV/app.yaml; runtime Apollo not verified"
+        },
         "parameters": {
           "headers": {
             "Authorization": "required; must equal configured script.secret"
@@ -58,6 +66,14 @@
         "path": "/api/v1/script/coupon-pack/refund/push",
         "handler": "CouponPackScriptController.refundPush",
         "summary": "券包退款推送",
+        "auth": {
+          "required": true,
+          "location": "header",
+          "name": "Authorization",
+          "secret_ref": "script.secret",
+          "resolved_from": "annotation-default",
+          "note": "no override found in application.properties/.ENV/app.yaml; runtime Apollo not verified"
+        },
         "parameters": {
           "headers": {
             "Authorization": "required; must equal configured script.secret"
@@ -75,6 +91,9 @@
         "path": "/api/v1/script/item/sync/base-search",
         "handler": "ItemScriptController.syncByBaseSearch",
         "summary": "商品搜索补偿同步，按有赞商品搜索翻页补齐 item 和 item_sku",
+        "auth": {
+          "required": false
+        },
         "parameters": {
           "body": {
             "page_no": "integer, optional",
@@ -91,6 +110,9 @@
         "path": "/api/v1/script/item/sync/item-sku-activity-check",
         "handler": "ItemScriptController.syncItemSkuActivityCheck",
         "summary": "SKU 活动补偿同步，处理 activity_check=1 的 item_sku 并回填活动同步结果",
+        "auth": {
+          "required": false
+        },
         "parameters": {},
         "source": "youzan-pousheng-web/src/main/kotlin/com/youzan/cloud/youzan/pousheng/controller/script/ItemScriptController.kt:32-37"
       },
@@ -101,6 +123,9 @@
         "path": "/api/v1/script/protocol/addUpdateCache",
         "handler": "ProtocolScriptController.addUpdateCache",
         "summary": "增加待更新积分活动库存",
+        "auth": {
+          "required": false
+        },
         "parameters": {
           "body": {
             "kdtId": "long, required in practice",
@@ -116,6 +141,9 @@
         "path": "/api/v1/script/protocol/syncUserProtocol",
         "handler": "ProtocolScriptController.syncUserProtocol",
         "summary": "同步所有已授权用户协议",
+        "auth": {
+          "required": false
+        },
         "parameters": {},
         "source": "youzan-pousheng-web/src/main/kotlin/com/youzan/cloud/youzan/pousheng/controller/script/ProtocolScriptController.kt:48-82"
       },
@@ -126,6 +154,9 @@
         "path": "/api/v1/script/protocol/syncWxOpenIdProtocol",
         "handler": "ProtocolScriptController.syncWxOpenIdUserProtocol",
         "summary": "同步最近七天待处理的 wxOpenId 用户协议",
+        "auth": {
+          "required": false
+        },
         "parameters": {},
         "source": "youzan-pousheng-web/src/main/kotlin/com/youzan/cloud/youzan/pousheng/controller/script/ProtocolScriptController.kt:139-179"
       },
@@ -136,6 +167,14 @@
         "path": "/api/v1/script/trade/order/push",
         "handler": "TradeScriptController.orderPush",
         "summary": "订单推送",
+        "auth": {
+          "required": true,
+          "location": "header",
+          "name": "Authorization",
+          "secret_ref": "script.secret",
+          "resolved_from": "annotation-default",
+          "note": "no override found in application.properties/.ENV/app.yaml; runtime Apollo not verified"
+        },
         "parameters": {
           "headers": {
             "Authorization": "required; must equal configured script.secret"
@@ -154,6 +193,14 @@
         "path": "/api/v1/script/trade/refund/push/buyer-cancel-refund",
         "handler": "TradeScriptController.buyerCancelRefundPush",
         "summary": "退单推送：买家撤销退款",
+        "auth": {
+          "required": true,
+          "location": "header",
+          "name": "Authorization",
+          "secret_ref": "script.secret",
+          "resolved_from": "annotation-default",
+          "note": "no override found in application.properties/.ENV/app.yaml; runtime Apollo not verified"
+        },
         "parameters": {
           "headers": {
             "Authorization": "required; must equal configured script.secret"
@@ -171,6 +218,14 @@
         "path": "/api/v1/script/trade/refund/push/buyer-only-refund",
         "handler": "TradeScriptController.buyerOnlyRefundPush",
         "summary": "退单推送：买家仅退款",
+        "auth": {
+          "required": true,
+          "location": "header",
+          "name": "Authorization",
+          "secret_ref": "script.secret",
+          "resolved_from": "annotation-default",
+          "note": "no override found in application.properties/.ENV/app.yaml; runtime Apollo not verified"
+        },
         "parameters": {
           "headers": {
             "Authorization": "required; must equal configured script.secret"
@@ -188,6 +243,14 @@
         "path": "/api/v1/script/trade/refund/push/buyer-return-refund",
         "handler": "TradeScriptController.buyerReturnRefundPush",
         "summary": "退单推送：买家退货退款",
+        "auth": {
+          "required": true,
+          "location": "header",
+          "name": "Authorization",
+          "secret_ref": "script.secret",
+          "resolved_from": "annotation-default",
+          "note": "no override found in application.properties/.ENV/app.yaml; runtime Apollo not verified"
+        },
         "parameters": {
           "headers": {
             "Authorization": "required; must equal configured script.secret"
@@ -206,6 +269,14 @@
         "path": "/api/v1/script/trade/refund/resultNotify",
         "handler": "TradeScriptController.resultNotify",
         "summary": "退单处理结果通知",
+        "auth": {
+          "required": true,
+          "location": "header",
+          "name": "Authorization",
+          "secret_ref": "script.secret",
+          "resolved_from": "annotation-default",
+          "note": "no override found in application.properties/.ENV/app.yaml; runtime Apollo not verified"
+        },
         "parameters": {
           "headers": {
             "Authorization": "required; must equal configured script.secret"
