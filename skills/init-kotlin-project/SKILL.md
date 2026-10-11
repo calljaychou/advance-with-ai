@@ -1,6 +1,6 @@
 ---
 name: init-kotlin-project
-description: Initialize or reset a Youzan/Qingyan Kotlin Spring Boot Maven project using the local QY style. Use when the user asks to initialize a Kotlin project, remove api/biz/dal/deploy submodules, configure root and web POMs, add .ENV OpenSDK/MySQL/Redis settings, add MyBatis Generator config, create Kotlin package directories and common base files, or optionally create docs/PRDs docs/RFCs docs/Plans and root AGENTS.md vibe-coding workspace.
+description: Initialize or reset a Youzan/Qingyan Kotlin Spring Boot Maven project using the local QY style. Use when the user asks to initialize a Kotlin project, remove api/biz/dal/deploy submodules, configure root and web POMs, add .ENV OpenSDK/MySQL/Redis settings, add MyBatis Generator config, create Kotlin package directories and common base files, or optionally create docs and a root AGENTS.md vibe-coding workspace.
 ---
 
 # Init Kotlin Project
@@ -51,7 +51,7 @@ Useful options:
 - `--project-name <name>`: override the project name used for package paths and database name.
 - `--web-module <module>`: override the web module directory. Defaults to `<project-name>-web`, or the single existing `*-web` module.
 - `--qy-extension-version <version>`: override the default QY extension package version `0.0.8-SNAPSHOT`.
-- `--create-vibe-coding-workspace`: only create `docs/PRDs`, `docs/RFCs`, `docs/Plans`, and root `AGENTS.md`.
+- `--create-vibe-coding-workspace`: only create `docs` and root `AGENTS.md`.
 - `--dry-run`: print planned changes without writing files.
 
 ## What The Script Does
@@ -66,7 +66,7 @@ Useful options:
 - Add `src/main/resources/generatorConfig.xml`.
 - Does not create the vibe coding workspace or root `AGENTS.md` by default.
 
-When creating the vibe coding workspace, the script creates `docs/PRDs`, `docs/RFCs`, `docs/Plans`, and root `AGENTS.md`. The generated `AGENTS.md` includes the project guidance and backend structure overview, with project name and web module rendered from the current project. Existing `AGENTS.md` files are kept unchanged.
+When creating the vibe coding workspace, the script creates an empty `docs` directory and root `AGENTS.md`. The generated `AGENTS.md` includes the project guidance and backend structure overview, with project name and web module rendered from the current project. Existing `docs` and `AGENTS.md` files are kept unchanged.
 
 ## Notes
 

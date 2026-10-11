@@ -999,11 +999,11 @@ def update_env(root: Path, block: str, dry_run: bool, changed: list[str]) -> Non
 
 
 def create_vibe_coding_workspace(root: Path, project_name: str, web_module: str, dry_run: bool, changed: list[str]) -> None:
-    for doc_dir in (root / "docs/PRDs", root / "docs/RFCs", root / "docs/Plans"):
-        if not doc_dir.exists():
-            changed.append(str(doc_dir))
-            if not dry_run:
-                doc_dir.mkdir(parents=True, exist_ok=True)
+    docs_dir = root / "docs"
+    if not docs_dir.exists():
+        changed.append(str(docs_dir))
+        if not dry_run:
+            docs_dir.mkdir(parents=True, exist_ok=True)
     write_text_if_absent(root / "AGENTS.md", build_agents_text(project_name, web_module), dry_run, changed)
 
 
@@ -1023,7 +1023,7 @@ def main() -> int:
     parser.add_argument("--mysql-username", help="Local MySQL username.")
     parser.add_argument("--mysql-password", help="Local MySQL password.")
     parser.add_argument("--qy-extension-version", help="com.qingyan:youzan-extension version.")
-    parser.add_argument("--create-vibe-coding-workspace", action="store_true", help="Only create docs/PRDs, docs/RFCs, docs/Plans, and root AGENTS.md.")
+    parser.add_argument("--create-vibe-coding-workspace", action="store_true", help="Only create docs and root AGENTS.md.")
     parser.add_argument("--dry-run", action="store_true", help="Print planned changes without writing.")
     args = parser.parse_args()
 
