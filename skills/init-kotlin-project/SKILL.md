@@ -11,7 +11,7 @@ description: Initialize or reset a Youzan/Qingyan Kotlin Spring Boot Maven proje
 2. Collect these values in order:
    - application `clientId`
    - application `clientSecret`
-   - QY extension package version defaults to `0.0.8-SNAPSHOT`; collect it only when the developer wants to override the default
+   - QY extension package version defaults to `0.0.9-SNAPSHOT`; collect it only when the developer wants to override the default
 3. Run `scripts/init_kotlin_project.py` from the repository root.
 4. The script creates the vibe coding workspace as part of standard initialization: `docs/前端开发文档.md` and root `AGENTS.md`. Do not ask whether to create it.
 5. Do static checks only unless the user explicitly asks to build:
@@ -33,13 +33,13 @@ python3 ~/.codex/skills/init-kotlin-project/scripts/init_kotlin_project.py \
   --client-secret '<clientSecret>'
 ```
 
-If any required value is omitted, the script prompts interactively in the required order. The QY extension package version is optional and defaults to `0.0.8-SNAPSHOT`; pass `--qy-extension-version` only when the developer wants to override it.
+If any required value is omitted, the script prompts interactively in the required order. The QY extension package version is optional and defaults to `0.0.9-SNAPSHOT`; pass `--qy-extension-version` only when the developer wants to override it.
 
 Useful options:
 
 - `--project-name <name>`: override the project name used for package paths and database name.
 - `--web-module <module>`: override the web module directory. Defaults to `<project-name>-web`, or the single existing `*-web` module.
-- `--qy-extension-version <version>`: override the default QY extension package version `0.0.8-SNAPSHOT`.
+- `--qy-extension-version <version>`: override the default QY extension package version `0.0.9-SNAPSHOT`.
 - `--create-vibe-coding-workspace`: only backfill `docs/前端开发文档.md` and root `AGENTS.md` without running full initialization. Standard initialization already creates them automatically.
 - `--dry-run`: print planned changes without writing files.
 
