@@ -11,8 +11,6 @@ description: Initialize or reset a Youzan/Qingyan Kotlin Spring Boot Maven proje
 2. Collect these values in order:
    - application `clientId`
    - application `clientSecret`
-   - local MySQL username
-   - local MySQL password
    - QY extension package version defaults to `0.0.8-SNAPSHOT`; collect it only when the developer wants to override the default
 3. Run `scripts/init_kotlin_project.py` from the repository root.
 4. The script creates the vibe coding workspace as part of standard initialization: `docs/前端开发文档.md` and root `AGENTS.md`. Do not ask whether to create it.
@@ -32,9 +30,7 @@ Use the bundled script for the fixed initialization logic:
 python3 ~/.codex/skills/init-kotlin-project/scripts/init_kotlin_project.py \
   --project-root . \
   --client-id '<clientId>' \
-  --client-secret '<clientSecret>' \
-  --mysql-username root \
-  --mysql-password '<password>'
+  --client-secret '<clientSecret>'
 ```
 
 If any required value is omitted, the script prompts interactively in the required order. The QY extension package version is optional and defaults to `0.0.8-SNAPSHOT`; pass `--qy-extension-version` only when the developer wants to override it.
@@ -56,7 +52,9 @@ Useful options:
 - Create `src/main/kotlin/com/youzan/cloud/<project>` package scaffolding: `common`, `controller`, `dal`, `model`, `service`, `thirdside`, and `youzanopen`.
 - Create common base files under `common`: extension helpers, result handler annotation, CORS, Env, global exception/response handlers, and Swagger config.
 - Update root `.ENV` with OpenSDK, escrow token, Redis, idempotent, MySQL, MyBatis log, OAuth, and Swagger settings.
-- Add `src/main/resources/generatorConfig.xml`.
+- Copy the bundled `mysql-connector-java-8.0.19.jar` to `src/main/resources`.
+- Add `src/main/resources/generatorConfig.xml`, using the bundled resources jar as its `classPathEntry`.
+- Add `**/src/main/resources/generatorConfig.xml` to the root `.gitignore`.
 - Create the vibe coding workspace as part of standard initialization: `docs/前端开发文档.md` and root `AGENTS.md`.
 
 The script copies the bundled frontend development guide to `docs/前端开发文档.md` and creates root `AGENTS.md`. The generated `AGENTS.md` combines the QY project guidance, backend structure overview, core principles, development constraints, coding conventions, MyBatis/dynamic SQL rules, and frontend development conventions, with project name and web module rendered from the current project. Existing `docs/前端开发文档.md` and `AGENTS.md` files are kept unchanged.
@@ -65,4 +63,5 @@ The script copies the bundled frontend development guide to `docs/前端开发�
 
 - The script intentionally keeps `artifactId`, `groupId`, and `version` from existing POMs when possible.
 - The database name defaults to the project name.
+- MySQL is fixed to `192.168.2.111:3306`, with username `root` and password `123456`.
 - It never runs Maven or compilation.

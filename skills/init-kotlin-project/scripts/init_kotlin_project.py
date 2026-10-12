@@ -8,9 +8,17 @@ from pathlib import Path
 from typing import Optional
 
 
-DEFAULT_QY_EXTENSION_VERSION = "0.0.8-SNAPSHOT"
+DEFAULT_QY_EXTENSION_VERSION = "0.0.9-SNAPSHOT"
+MYSQL_HOST = "192.168.2.111"
+MYSQL_PORT = 3306
+MYSQL_USERNAME = "root"
+MYSQL_PASSWORD = "123456"
+MYSQL_CONNECTOR_JAR_NAME = "mysql-connector-java-8.0.19.jar"
+GENERATOR_CONFIG_IGNORE_ENTRY = "**/src/main/resources/generatorConfig.xml"
 FRONTEND_DEVELOPMENT_DOC_NAME = "前端开发文档.md"
-FRONTEND_DEVELOPMENT_DOC = Path(__file__).resolve().parent.parent / "assets" / FRONTEND_DEVELOPMENT_DOC_NAME
+SKILL_ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
+FRONTEND_DEVELOPMENT_DOC = SKILL_ASSETS_DIR / FRONTEND_DEVELOPMENT_DOC_NAME
+MYSQL_CONNECTOR_JAR = SKILL_ASSETS_DIR / MYSQL_CONNECTOR_JAR_NAME
 
 
 AGENTS_TEMPLATE = r"""# AGENTS
@@ -182,7 +190,7 @@ val roleIds = userRoleRelMapper.select {
 - src/components/ 存放可复用的自定义表单、富文本等组件。
 - src/utils/ 存放通用工具、生命周期钩子和状态管理代码。
 - 消费端开发目录 __PROJECT_NAME__-ui/cloud/client (开发消费端前注意阅读 cloud-client 目录下的 README.md 文件，了解项目架构)
-- 有赞店铺后台页面开发目录 __PROJECT_NAME__-ui/vite-admin-page 供应商独立后台页面开发目录 __PROJECT_NAME__-ui/vite-supplier-page
+- 有赞店铺后台页面开发目录 __PROJECT_NAME__-ui/vite-admin-page
 
 ### 常用命令
 - `yarn openapi`：根据配置生成 API 类型与 SDK 代码。
@@ -921,11 +929,11 @@ GENERATOR_TEMPLATE = """<!DOCTYPE generatorConfiguration PUBLIC
 <generatorConfiguration>
 
     <classPathEntry
-            location="/Users/mac-z/.m2/repository/mysql/mysql-connector-java/8.0.19/mysql-connector-java-8.0.19.jar"/>
+            location="src/main/resources/{mysql_connector_jar_name}"/>
 
     <context id="kotlin" targetRuntime="MyBatis3Kotlin">
         <jdbcConnection driverClass="com.mysql.cj.jdbc.Driver"
-                        connectionURL="jdbc:mysql://localhost:3306/{project_name}?
+                        connectionURL="jdbc:mysql://{mysql_host}:{mysql_port}/{project_name}?
                   characterEncoding=utf8&amp;useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;allowPublicKeyRetrieval=true"
                         userId="{mysql_username}"
                         password="{mysql_password}">
@@ -1087,7 +1095,7 @@ def create_project_scaffold(kotlin_package: Path, project_name: str, dry_run: bo
         )
 
 
-def env_block(project_name: str, client_id: str, client_secret: str, mysql_username: str, mysql_password: str) -> str:
+def env_block(project_name: str, client_id: str, client_secret: str) -> str:
     return f"""#opensdk
 opensdk.clientId={client_id}
 opensdk.clientSecret={client_secret}
@@ -1099,17 +1107,17 @@ escrow.token.clientSecret=${{opensdk.clientSecret}}
 escrow.token.tokenType=silent
 
 #redis
-spring.redis.host=127.0.0.1
+spring.redis.host=192.168.2.111
 spring.redis.port=6379
 
 #idempotent component
 cloud.idempotent.redis.enabled=true
 
 #mysql
-mysql.username={mysql_username}
-mysql.password={mysql_password}
+mysql.username={MYSQL_USERNAME}
+mysql.password={MYSQL_PASSWORD}
 druid.datasource.driverClassName=com.mysql.jdbc.Driver
-druid.datasource.url=jdbc:mysql://127.0.0.1:3306/{project_name}?characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+druid.datasource.url=jdbc:mysql://{MYSQL_HOST}:{MYSQL_PORT}/{project_name}?characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
 druid.datasource.username=${{mysql.username}}
 druid.datasource.password=${{mysql.password}}
 
@@ -1141,6 +1149,15 @@ def update_env(root: Path, block: str, dry_run: bool, changed: list[str]) -> Non
     write_text(path, text, dry_run, changed)
 
 
+def update_gitignore(root: Path, dry_run: bool, changed: list[str]) -> None:
+    path = root / ".gitignore"
+    existing = read_text(path)
+    if GENERATOR_CONFIG_IGNORE_ENTRY in {line.strip() for line in existing.splitlines()}:
+        return
+    separator = "" if not existing or existing.endswith("\n") else "\n"
+    write_text(path, f"{existing}{separator}{GENERATOR_CONFIG_IGNORE_ENTRY}\n", dry_run, changed)
+
+
 def create_vibe_coding_workspace(root: Path, project_name: str, web_module: str, dry_run: bool, changed: list[str]) -> None:
     docs_dir = root / "docs"
     if not docs_dir.exists():
@@ -1169,8 +1186,6 @@ def main() -> int:
     parser.add_argument("--web-module", help="Web module directory name.")
     parser.add_argument("--client-id", help="OpenSDK clientId.")
     parser.add_argument("--client-secret", help="OpenSDK clientSecret.")
-    parser.add_argument("--mysql-username", help="Local MySQL username.")
-    parser.add_argument("--mysql-password", help="Local MySQL password.")
     parser.add_argument("--qy-extension-version", help="com.qingyan:youzan-extension version.")
     parser.add_argument("--create-vibe-coding-workspace", action="store_true", help="Only create the workspace with the frontend development guide and root AGENTS.md.")
     parser.add_argument("--dry-run", action="store_true", help="Print planned changes without writing.")
@@ -1195,8 +1210,6 @@ def main() -> int:
 
     client_id = prompt(args.client_id, "application clientId")
     client_secret = prompt(args.client_secret, "application clientSecret", secret=True)
-    mysql_username = prompt(args.mysql_username, "local MySQL username")
-    mysql_password = prompt(args.mysql_password, "local MySQL password", secret=True)
     qy_extension_version = args.qy_extension_version.strip() if args.qy_extension_version else DEFAULT_QY_EXTENSION_VERSION
 
     root_xml = read_text(root / "pom.xml")
@@ -1257,7 +1270,14 @@ def main() -> int:
 
     update_env(
         root,
-        env_block(project_name, client_id, client_secret, mysql_username, mysql_password),
+        env_block(project_name, client_id, client_secret),
+        args.dry_run,
+        changed,
+    )
+
+    copy_file_if_absent(
+        MYSQL_CONNECTOR_JAR,
+        web_root / "src/main/resources" / MYSQL_CONNECTOR_JAR_NAME,
         args.dry_run,
         changed,
     )
@@ -1266,12 +1286,16 @@ def main() -> int:
         web_root / "src/main/resources/generatorConfig.xml",
         GENERATOR_TEMPLATE.format(
             project_name=project_name,
-            mysql_username=mysql_username,
-            mysql_password=mysql_password,
+            mysql_host=MYSQL_HOST,
+            mysql_port=MYSQL_PORT,
+            mysql_username=MYSQL_USERNAME,
+            mysql_password=MYSQL_PASSWORD,
+            mysql_connector_jar_name=MYSQL_CONNECTOR_JAR_NAME,
         ),
         args.dry_run,
         changed,
     )
+    update_gitignore(root, args.dry_run, changed)
 
     create_vibe_coding_workspace(root, project_name, web_module, args.dry_run, changed)
 
