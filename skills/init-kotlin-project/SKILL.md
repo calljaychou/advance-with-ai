@@ -66,7 +66,7 @@ Useful options:
 - Add `src/main/resources/generatorConfig.xml`.
 - Does not create the vibe coding workspace or root `AGENTS.md` by default.
 
-When creating the vibe coding workspace, the script creates an empty `docs` directory and root `AGENTS.md`. The generated `AGENTS.md` includes the project guidance and backend structure overview, with project name and web module rendered from the current project. Existing `docs` and `AGENTS.md` files are kept unchanged.
+When creating the vibe coding workspace, the script creates an empty `docs` directory and root `AGENTS.md`. The generated `AGENTS.md` combines the QY project guidance, backend structure overview, core principles, development constraints, coding conventions, MyBatis/dynamic SQL rules, and frontend development conventions, with project name and web module rendered from the current project. Existing `docs` and `AGENTS.md` files are kept unchanged.
 
 ## Notes
 
