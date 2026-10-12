@@ -15,9 +15,12 @@ MYSQL_USERNAME = "root"
 MYSQL_PASSWORD = "123456"
 MYSQL_CONNECTOR_JAR_NAME = "mysql-connector-java-8.0.19.jar"
 GENERATOR_CONFIG_IGNORE_ENTRY = "**/src/main/resources/generatorConfig.xml"
-FRONTEND_DEVELOPMENT_DOC_NAME = "前端开发文档.md"
+CONSUMER_DEVELOPMENT_DOC_NAME = "消费端开发文档.md"
+ADMIN_DEVELOPMENT_DOC_NAME = "管理后台开发文档.md"
+LEGACY_FRONTEND_DEVELOPMENT_DOC_NAME = "前端开发文档.md"
 SKILL_ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
-FRONTEND_DEVELOPMENT_DOC = SKILL_ASSETS_DIR / FRONTEND_DEVELOPMENT_DOC_NAME
+CONSUMER_DEVELOPMENT_DOC = SKILL_ASSETS_DIR / CONSUMER_DEVELOPMENT_DOC_NAME
+ADMIN_DEVELOPMENT_DOC = SKILL_ASSETS_DIR / ADMIN_DEVELOPMENT_DOC_NAME
 MYSQL_CONNECTOR_JAR = SKILL_ASSETS_DIR / MYSQL_CONNECTOR_JAR_NAME
 
 
@@ -177,33 +180,108 @@ val roleIds = userRoleRelMapper.select {
 }
 
 ```
-
 ## 前端
 
-### 开发前必读
-开发前需要先阅读 docs/前端开发文档.md，并按照其中的开放框架、页面配置、组件使用和代码规范执行。涉及具体开放场景、API、插槽或多端组件时，还需要通过https://doc.youzanyun.com/llms.txt继续查阅该文档要求的对应资料。
+### 工程边界与必读文档
 
-### 项目概览
-- 本项目是有赞消费者端定制项目，使用 Vue 与 Tee 多端框架，支持 H5 和微信小程序。
-- src/app.js 是应用级定制入口，src/app.json 是应用级配置入口。
-- src/api/sdk.gen.js 存放接口请求与生成的 SDK 代码。
-- src/components/ 存放可复用的自定义表单、富文本等组件。
-- src/utils/ 存放通用工具、生命周期钩子和状态管理代码。
-- 消费端开发目录 __PROJECT_NAME__-ui/cloud/client (开发消费端前注意阅读 cloud-client 目录下的 README.md 文件，了解项目架构)
-- 有赞店铺后台页面开发目录 __PROJECT_NAME__-ui/vite-admin-page
+前端代码分为消费端与管理后台两个独立工程。开始开发前必须先确认目标端，不得混用两个工程的技术栈、目录结构、组件、API 生成文件或运行命令。
 
-### 常用命令
-- `yarn openapi`：根据配置生成 API 类型与 SDK 代码。
+| 类型     | 开发目录                    | 技术栈                                                | 必读文档                   |
+| -------- | --------------------------- | ----------------------------------------------------- | -------------------------- |
+| 消费端   | `__PROJECT_NAME__-ui/cloud/client`    | Vue + Tee 多端框架，支持 H5 和微信小程序              | `docs/消费端开发文档.md`   |
+| 管理后台 | `__PROJECT_NAME__-ui/vite-react-page` | React + Vite + TypeScript + React Router + Ant Design | `docs/管理后台开发文档.md` |
 
-### 修改约定
-- 遵循现有 JavaScript、Vue、SCSS 和 JSON 的代码风格，优先复用已有组件与工具。
-- 修改页面、应用配置或开放能力前，先确认 docs/前端开发文档.md 中对应的页面 key、配置格式、平台支持和 API 约束。
-- 完成修改后，针对变更范围运行合适的构建、检查或测试命令。
+- 修改代码前必须先阅读对应端的开发文档，再结合现有代码确认实现方式。
+- 涉及消费端开放页面、开放 API、开放插槽、开放组件或多端组件时，还必须通过 https://doc.youzanyun.com/llms.txt 查阅对应的有赞云资料。
+- 所有前端命令必须在对应工程目录中执行，不要在仓库根目录或另一端工程中执行。
+- 完成修改后，根据变更范围运行对应工程已有的 TypeScript、ESLint、Prettier、测试或构建检查，不为检查额外引入依赖。
+
+### 消费端开发
+
+#### 工程入口与目录职责
+
+- 开发目录：`__PROJECT_NAME__-ui/cloud/client`。
+- 必读文档：`docs/消费端开发文档.md`。
+- `src/app.js`：应用级定制入口，负责通过 `extendApp` 注册应用生命周期和公共能力。
+- `src/app.json`：应用级配置入口，负责配置开放页面、插槽和自定义页面等能力。
+- `src/pages/`：消费端页面逻辑、配置和视图代码。
+- `src/components/`：消费端可复用的 Vue/Tee 组件。
+- `src/utils/`：消费端公共工具、生命周期辅助和状态管理代码。
+- `src/api/sdk.gen.js`：通过 OpenAPI 生成的消费端 SDK，不得手动修改。
+
+#### 开发与 API 约定
+
+- 遵循现有 JavaScript、Vue、SCSS 和 JSON 风格，优先复用 Tee UI、现有组件与工具。
+- 修改页面、应用配置或开放能力前，必须先从 `docs/消费端开发文档.md` 确认页面 key、配置格式、平台支持范围及 API 约束。
+- 同时考虑 H5 与微信小程序兼容性，不得仅按浏览器 DOM 或单一平台行为实现。
+- 消费端 API 非特殊情况不得手写。后端提供 Swagger/OpenAPI 后，在消费端工程中执行 `npm run openapi` 生成 `src/api/sdk.gen.js`。
+- 如确有无法通过 OpenAPI 生成的特殊 API，必须先说明原因并确认方案，再修改 `src/api/index.js` 等手动接口文件。
+
+#### 常用命令
+
+- `npm run dev`：启动 H5 开发环境。
+- `npm run dev:weapp`：启动微信小程序开发环境。
+- `npm run openapi`：生成消费端 API SDK。
+- `npm run build`：构建消费端工程，仅在任务需要构建验证时执行。
+
+### 管理后台开发
+
+#### 工程入口与目录职责
+
+- 开发目录：`__PROJECT_NAME__-ui/vite-react-page`。
+- 必读文档：`docs/管理后台开发文档.md`。
+- `src/main.tsx`：默认管理后台应用挂载入口。
+- `src/pages/`：管理后台页面及独立页面构建入口。
+- `src/components/`：跨页面复用的公共 React 组件，新增页面前必须优先检查和复用。
+- `src/hooks/`：请求、列表、弹窗和事件等公共 Hook，禁止在页面中重复实现已有能力。
+- `src/router/`：默认应用路由、路由工具和路由公共组件。
+- `src/api/generated/`：通过 OpenAPI 生成的管理后台 SDK，不得手动修改。
+- `src/api/config.ts`：统一请求实例、拦截器和生成 SDK 的运行时配置。
+
+#### 页面、组件与样式约定
+
+- 页面按需拆分为 `App.tsx`、`components/`、`hooks/`、`utils.ts`、`constants.ts`、`types.ts` 和 `styles.ts`，不得把业务组件、工具、类型和样式全部堆积在 `App.tsx`。
+- 一个组件文件只定义一个 React 组件；可独立命名、接收独立 Props 或维护独立状态的子组件必须拆分为单独文件。
+- 优先使用 Tailwind CSS 实现布局和常规样式；复杂选择器、动态主题或第三方组件覆盖再使用 styled-components。
+- 不同页面、不同组件的 styled-components 必须放入各自独立的样式文件，不得集中到单个页面级或全局样式文件。
+- 开发新能力前依次检查 `src/components/`、`src/hooks/`、`src/utils/`、`src/types/` 和 `src/api/`，能够复用或小范围扩展时不得重复实现。
+
+#### 独立页面与路由约定
+
+`__PROJECT_NAME__-ui/vite-react-page/vite.config.ts` 使用 `MultiPageAutoPlugin`（`vite-plugin-multipage-auto`）自动发现多页面入口：
+
+- `__PROJECT_NAME__-ui/vite-react-page/src/pages/` 下的页面目录如果存在 `main.tsx`，该目录会被识别并打包为一个独立页面。
+- 新增独立页面时，必须在 `src/pages/<页面目录>/main.tsx` 中配置 React 挂载入口，并按现有页面结构引入该独立页面的 Router、全局样式及必要的 Provider。
+- 如果该独立页面还包含详情页、编辑页或其他关联页面，应通过该独立页面的 `router` 配置统一引入，优先使用路由懒加载；不要为这些关联页面分别添加 `main.tsx`。
+- 一个独立页面目录只保留一个 `main.tsx` 构建入口，其关联页面由 Router 组织，最终将该入口打包为一个单页应用（SPA）。
+- 可参考 `src/pages/list/main.tsx` 与 `src/pages/list/router/index.tsx` 的目录结构和配置方式。
+
+推荐目录结构：
+
+```plaintext
+src/pages/<页面目录>/
+├── main.tsx                 # MultiPageAutoPlugin 识别的独立构建入口
+├── App.tsx                  # 入口页面组件
+├── router/
+│   └── index.tsx            # 该单页应用的路由配置
+└── <关联页面>/              # 详情、编辑等路由页面，不单独添加 main.tsx
+```
+
+#### API 与常用命令
+
+- 后端提供 Swagger/OpenAPI 后，在管理后台工程中执行 `npm run openapi` 生成 `src/api/generated/`。
+- 页面应复用 `src/api/config.ts` 的统一请求配置，不得绕开拦截器重复创建请求实例。
+- `npm run dev`：启动管理后台开发环境。
+- `npm run dev:scan`：启动带 React Scan 的开发环境。
+- `npm run openapi`：生成管理后台 API SDK。
+- `npm run build`：构建管理后台工程，仅在任务需要构建验证时执行。
 
 ### 前后端并行开发约定
 
-- 消费端 API 非特殊情况不得手写。后端先确定接口契约并提供 Swagger，前端使用 `npm run openapi` 生成 src/api/sdk.gen.js 及类型文件后再对接，不直接编辑生成文件.
-- 并行开发时先通过前后端约定字段、路径、错误码和状态流转，页面可以先写逻辑和 mock 数据，但不要单独创建消费端 API 文件； 如确有特殊 API 不能通过 OpenAPI 生成，必须先向用户说明原因并确认方案。
+- 前后端并行开发前先约定接口路径、请求方法、字段、分页结构、错误码和状态流转，再分别实现。
+- 页面可以先实现交互逻辑并使用 Mock 数据，但不得因此创建一套绕开 OpenAPI 的临时 API 层。
+- 消费端生成文件是 `__PROJECT_NAME__-ui/cloud/client/src/api/sdk.gen.js`，管理后台生成目录是 `__PROJECT_NAME__-ui/vite-react-page/src/api/generated/`；两者均不得手动编辑。
+- 如接口暂时无法生成，先保留页面逻辑和 Mock，或说明原因并确认临时方案，不得自行固化未经确认的接口契约。
 
 ## 最终目标
 
@@ -1179,9 +1257,20 @@ def create_vibe_coding_workspace(root: Path, project_name: str, web_module: str,
         changed.append(str(docs_dir))
         if not dry_run:
             docs_dir.mkdir(parents=True, exist_ok=True)
+    legacy_frontend_doc = docs_dir / LEGACY_FRONTEND_DEVELOPMENT_DOC_NAME
+    if legacy_frontend_doc.exists():
+        changed.append(str(legacy_frontend_doc))
+        if not dry_run:
+            legacy_frontend_doc.unlink()
     copy_file_if_absent(
-        FRONTEND_DEVELOPMENT_DOC,
-        docs_dir / FRONTEND_DEVELOPMENT_DOC_NAME,
+        CONSUMER_DEVELOPMENT_DOC,
+        docs_dir / CONSUMER_DEVELOPMENT_DOC_NAME,
+        dry_run,
+        changed,
+    )
+    copy_file_if_absent(
+        ADMIN_DEVELOPMENT_DOC,
+        docs_dir / ADMIN_DEVELOPMENT_DOC_NAME,
         dry_run,
         changed,
     )
@@ -1203,7 +1292,7 @@ def main() -> int:
     parser.add_argument("--client-id", help="OpenSDK clientId.")
     parser.add_argument("--client-secret", help="OpenSDK clientSecret.")
     parser.add_argument("--qy-extension-version", help="com.qingyan:youzan-extension version.")
-    parser.add_argument("--create-vibe-coding-workspace", action="store_true", help="Only create the workspace with the frontend development guide and root AGENTS.md.")
+    parser.add_argument("--create-vibe-coding-workspace", action="store_true", help="Only create the workspace with the consumer and admin development guides and root AGENTS.md.")
     parser.add_argument("--dry-run", action="store_true", help="Print planned changes without writing.")
     args = parser.parse_args()
 
