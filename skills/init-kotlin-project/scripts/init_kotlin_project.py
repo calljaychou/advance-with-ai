@@ -728,7 +728,7 @@ ROOT_POM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 \t\t\t\t\t\t<option>no-arg:annotation=com.qingyan.extension.annotation.AllOpen</option>
 \t\t\t\t\t\t<option>all-open:annotation=com.youzan.api.rpc.annotation.ExtensionService</option>
 \t\t\t\t\t\t<option>all-open:annotation=com.youzan.cloud.metadata.annotation.Topic</option>
-\t\t\t\t\t\t<option>all-open:annotation=com.youzan.cloud.{project_name}.common.annotation.AllOpen</option>
+\t\t\t\t\t\t<option>all-open:annotation=com.qingyan.extension.annotation.AllOpen</option>
 \t\t\t\t\t</pluginOptions>
 \t\t\t\t\t<args>
 \t\t\t\t\t\t<arg>-Xjsr305=strict</arg>
