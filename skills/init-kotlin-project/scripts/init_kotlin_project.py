@@ -9,6 +9,8 @@ from typing import Optional
 
 
 DEFAULT_QY_EXTENSION_VERSION = "0.0.8-SNAPSHOT"
+FRONTEND_DEVELOPMENT_DOC_NAME = "前端开发文档.md"
+FRONTEND_DEVELOPMENT_DOC = Path(__file__).resolve().parent.parent / "assets" / FRONTEND_DEVELOPMENT_DOC_NAME
 
 
 AGENTS_TEMPLATE = r"""# AGENTS
@@ -988,6 +990,15 @@ def write_text_if_absent(path: Path, text: str, dry_run: bool, changed: list[str
         path.write_text(text, encoding="utf-8")
 
 
+def copy_file_if_absent(source: Path, target: Path, dry_run: bool, changed: list[str]) -> None:
+    if target.exists():
+        return
+    changed.append(str(target))
+    if not dry_run:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, target)
+
+
 def prompt(value: Optional[str], label: str, secret: bool = False, default: Optional[str] = None) -> str:
     if value and value.strip():
         return value.strip()
@@ -1136,6 +1147,12 @@ def create_vibe_coding_workspace(root: Path, project_name: str, web_module: str,
         changed.append(str(docs_dir))
         if not dry_run:
             docs_dir.mkdir(parents=True, exist_ok=True)
+    copy_file_if_absent(
+        FRONTEND_DEVELOPMENT_DOC,
+        docs_dir / FRONTEND_DEVELOPMENT_DOC_NAME,
+        dry_run,
+        changed,
+    )
     write_text_if_absent(root / "AGENTS.md", build_agents_text(project_name, web_module), dry_run, changed)
 
 
@@ -1155,7 +1172,7 @@ def main() -> int:
     parser.add_argument("--mysql-username", help="Local MySQL username.")
     parser.add_argument("--mysql-password", help="Local MySQL password.")
     parser.add_argument("--qy-extension-version", help="com.qingyan:youzan-extension version.")
-    parser.add_argument("--create-vibe-coding-workspace", action="store_true", help="Only create docs and root AGENTS.md.")
+    parser.add_argument("--create-vibe-coding-workspace", action="store_true", help="Only create the workspace with the frontend development guide and root AGENTS.md.")
     parser.add_argument("--dry-run", action="store_true", help="Print planned changes without writing.")
     args = parser.parse_args()
 
@@ -1255,6 +1272,8 @@ def main() -> int:
         args.dry_run,
         changed,
     )
+
+    create_vibe_coding_workspace(root, project_name, web_module, args.dry_run, changed)
 
     print_changed_paths(changed)
     return 0
