@@ -22,6 +22,16 @@ description: Initialize or reset a Youzan/Qingyan Kotlin Spring Boot Maven proje
 
 Do not run Maven, compile, package, or MyBatis Generator unless the user explicitly asks.
 
+## 执行提速约定（务必遵守）
+
+- 项目根与项目名直接取当前工作目录和根 POM `artifactId`，不要扫描工作区或兄弟工程确认命名约定。
+- 包名由脚本自动从项目名转换：`-` 替换为 `.`，例如 `yf-brp` → `com.youzan.cloud.yf.brp`；需要强制指定时用 `--package-name`。
+- `all-open` 已指向 QY 扩展包注解 `com.qingyan.extension.annotation.AllOpen`，无需再生成项目内 `AllOpen.kt`。
+- QY 扩展包版本默认 `0.0.9-SNAPSHOT`，MySQL/Redis 使用固定公司地址，不要就此反问用户。
+- 若用户未在对话中给出 `clientId`/`clientSecret`，一次性索要后作为命令行参数传入，避免脚本交互式逐项等待。
+- 用户未要求预览时，直接执行一次正式脚本，不要先 `--dry-run` 再正式执行。
+- 静态校验合并为一次命令执行，不要逐条单独跑。
+
 ## Script
 
 Use the bundled script for the fixed initialization logic:
@@ -37,7 +47,8 @@ If any required value is omitted, the script prompts interactively in the requir
 
 Useful options:
 
-- `--project-name <name>`: override the project name used for package paths and database name.
+- `--project-name <name>`: override the project name used for module names and database name.
+- `--package-name <name>`: override the Kotlin package name. Defaults to the project name with `-` replaced by `.`.
 - `--web-module <module>`: override the web module directory. Defaults to `<project-name>-web`, or the single existing `*-web` module.
 - `--qy-extension-version <version>`: override the default QY extension package version `0.0.9-SNAPSHOT`.
 - `--create-vibe-coding-workspace`: only backfill `docs/前端开发文档.md` and root `AGENTS.md` without running full initialization. Standard initialization already creates them automatically.
@@ -48,8 +59,8 @@ Useful options:
 - Delete old split modules: `<project>-api`, `<project>-biz`, `<project>-dal`, `<project>-deploy`.
 - Rewrite the root POM for a single web module and Kotlin Maven plugin configuration.
 - Rewrite the web POM with QY extension, Youzan, Swagger, MyBatis Generator, Redisson, Hutool, and Aladdin plugin dependencies.
-- Remove `src/main/java/com/youzan/cloud/<project>/web`.
-- Create `src/main/kotlin/com/youzan/cloud/<project>` package scaffolding: `common`, `controller`, `dal`, `model`, `service`, `thirdside`, and `youzanopen`.
+- Remove `src/main/java/com/youzan/cloud/<package-path>/web`.
+- Create `src/main/kotlin/com/youzan/cloud/<package-path>` package scaffolding: `common`, `controller`, `dal`, `model`, `service`, `thirdside`, and `youzanopen`. `<package-path>` 由项目名把 `-` 换成 `.` 再换成目录 `/` 得到，例如 `yf-brp` → `yf/brp`。
 - Create common base files under `common`: extension helpers, result handler annotation, CORS, Env, global exception/response handlers, and Swagger config.
 - Update root `.ENV` with OpenSDK, escrow token, Redis, idempotent, MySQL, MyBatis log, OAuth, and Swagger settings.
 - Copy the bundled `mysql-connector-java-8.0.19.jar` to `src/main/resources`.

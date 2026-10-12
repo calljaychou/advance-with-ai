@@ -48,11 +48,11 @@ AGENTS_TEMPLATE = r"""# AGENTS
 ```plaintext
 __WEB_MODULE__/src/main/
 ├── java/                                     # Java 入口类 & 有赞扩展包装层
-│   └── com/youzan/cloud/__PROJECT_NAME__/
+│   └── com/youzan/cloud/__PACKAGE_PATH__/
 │       ├── __PROJECT_CLASS_NAME__Application.java               # Spring Boot 程序启动入口
 │       └── open/youzan/extension/            # 有赞扩展点实现包装类
 └── kotlin/                                   # Kotlin 源码（核心业务逻辑层）
-    └── com/youzan/cloud/__PROJECT_NAME__/
+    └── com/youzan/cloud/__PACKAGE_PATH__/
         ├── controller/                       # REST 接口控制器
         │   ├── admin/                        # 商家后台管理接口
         │   ├── client/                       # C端用户访问接口
@@ -498,7 +498,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice
  * response 包装器
  * 禁止范围为全局，必须指定basePackages
  */
-@RestControllerAdvice(basePackages = [\"com.youzan.cloud.__PROJECT_NAME__.controller\"])
+@RestControllerAdvice(basePackages = [\"com.youzan.cloud.__PACKAGE__.controller\"])
 class GlobalControllerResponseHandler : ResponseBodyAdvice<Any?> {
 
     override fun supports(returnType: MethodParameter, converterType: Class<out HttpMessageConverter<*>>) =
@@ -940,8 +940,8 @@ GENERATOR_TEMPLATE = """<!DOCTYPE generatorConfiguration PUBLIC
             <property name="nullCatalogMeansCurrent" value="true"/>
         </jdbcConnection>
 
-        <javaModelGenerator targetPackage="com.youzan.cloud.youzan.{project_name}.dal.model" targetProject="src/main/kotlin"/>
-        <javaClientGenerator targetPackage="com.youzan.cloud.youzan.{project_name}.dal.mapper"
+        <javaModelGenerator targetPackage="com.youzan.cloud.{package_name}.dal.model" targetProject="src/main/kotlin"/>
+        <javaClientGenerator targetPackage="com.youzan.cloud.{package_name}.dal.mapper"
                              targetProject="src/main/kotlin"/>
 
         <table tableName="table">
@@ -1064,9 +1064,23 @@ def create_dir_if_absent(path: Path, dry_run: bool, changed: list[str]) -> None:
         path.mkdir(parents=True, exist_ok=True)
 
 
-def build_common_file_text(template: str, project_name: str) -> str:
-    package_name = f"com.youzan.cloud.{project_name}"
-    return template.replace("__PACKAGE__", package_name).replace("__PROJECT_NAME__", project_name)
+def build_package_name(project_name: str) -> str:
+    """把工件名转换为合法包名，例如 yf-brp -> yf.brp。"""
+    parts = [part for part in re.split(r"[^A-Za-z0-9]+", project_name) if part]
+    return ".".join(parts) or "app"
+
+
+def build_package_path(package_name: str) -> str:
+    """把包名转换为源码目录，例如 yf.brp -> yf/brp。"""
+    return package_name.replace(".", "/")
+
+
+def build_common_file_text(template: str, project_name: str, package_name: str) -> str:
+    return (
+        template
+        .replace("__PACKAGE__", f"com.youzan.cloud.{package_name}")
+        .replace("__PROJECT_NAME__", project_name)
+    )
 
 
 def build_project_class_name(project_name: str) -> str:
@@ -1074,22 +1088,23 @@ def build_project_class_name(project_name: str) -> str:
     return "".join(part[:1].upper() + part[1:] for part in parts) or "Application"
 
 
-def build_agents_text(project_name: str, web_module: str) -> str:
+def build_agents_text(project_name: str, web_module: str, package_path: str) -> str:
     return (
         AGENTS_TEMPLATE
+        .replace("__PACKAGE_PATH__", package_path)
         .replace("__PROJECT_NAME__", project_name)
         .replace("__PROJECT_CLASS_NAME__", build_project_class_name(project_name))
         .replace("__WEB_MODULE__", web_module)
     )
 
 
-def create_project_scaffold(kotlin_package: Path, project_name: str, dry_run: bool, changed: list[str]) -> None:
+def create_project_scaffold(kotlin_package: Path, project_name: str, package_name: str, dry_run: bool, changed: list[str]) -> None:
     for relative_dir in PROJECT_PACKAGE_DIRS:
         create_dir_if_absent(kotlin_package / relative_dir, dry_run, changed)
     for relative_file, template in COMMON_FILE_TEMPLATES.items():
         write_text_if_absent(
             kotlin_package / relative_file,
-            build_common_file_text(template, project_name),
+            build_common_file_text(template, project_name, package_name),
             dry_run,
             changed,
         )
@@ -1158,7 +1173,7 @@ def update_gitignore(root: Path, dry_run: bool, changed: list[str]) -> None:
     write_text(path, f"{existing}{separator}{GENERATOR_CONFIG_IGNORE_ENTRY}\n", dry_run, changed)
 
 
-def create_vibe_coding_workspace(root: Path, project_name: str, web_module: str, dry_run: bool, changed: list[str]) -> None:
+def create_vibe_coding_workspace(root: Path, project_name: str, web_module: str, package_path: str, dry_run: bool, changed: list[str]) -> None:
     docs_dir = root / "docs"
     if not docs_dir.exists():
         changed.append(str(docs_dir))
@@ -1170,7 +1185,7 @@ def create_vibe_coding_workspace(root: Path, project_name: str, web_module: str,
         dry_run,
         changed,
     )
-    write_text_if_absent(root / "AGENTS.md", build_agents_text(project_name, web_module), dry_run, changed)
+    write_text_if_absent(root / "AGENTS.md", build_agents_text(project_name, web_module, package_path), dry_run, changed)
 
 
 def print_changed_paths(changed: list[str]) -> None:
@@ -1182,7 +1197,8 @@ def print_changed_paths(changed: list[str]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Initialize a Youzan/Qingyan Kotlin Spring Maven project.")
     parser.add_argument("--project-root", default=".", help="Project root directory.")
-    parser.add_argument("--project-name", help="Project name used for package paths and DB name.")
+    parser.add_argument("--project-name", help="Project name used for module names and database name.")
+    parser.add_argument("--package-name", help="Kotlin package name, defaults to project name with '-' replaced by '.'.")
     parser.add_argument("--web-module", help="Web module directory name.")
     parser.add_argument("--client-id", help="OpenSDK clientId.")
     parser.add_argument("--client-secret", help="OpenSDK clientSecret.")
@@ -1200,13 +1216,15 @@ def main() -> int:
     if args.create_vibe_coding_workspace:
         project_name = detect_project_name(root, args.project_name)
         web_module = detect_web_module(root, project_name, args.web_module)
-        create_vibe_coding_workspace(root, project_name, web_module, args.dry_run, changed)
+        package_name = args.package_name.strip() if args.package_name else build_package_name(project_name)
+        create_vibe_coding_workspace(root, project_name, web_module, build_package_path(package_name), args.dry_run, changed)
         print_changed_paths(changed)
         return 0
 
     project_name = detect_project_name(root, args.project_name)
     web_module = detect_web_module(root, project_name, args.web_module)
     web_root = root / web_module
+    package_name = args.package_name.strip() if args.package_name else build_package_name(project_name)
 
     client_id = prompt(args.client_id, "application clientId")
     client_secret = prompt(args.client_secret, "application clientSecret", secret=True)
@@ -1258,15 +1276,15 @@ def main() -> int:
         changed,
     )
 
-    java_web_package = web_root / "src/main/java/com/youzan/cloud" / project_name / "web"
+    java_web_package = web_root / "src/main/java/com/youzan/cloud" / build_package_path(package_name) / "web"
     if java_web_package.exists():
         changed.append(str(java_web_package))
         if not args.dry_run:
             shutil.rmtree(java_web_package)
 
-    kotlin_package = web_root / "src/main/kotlin/com/youzan/cloud" / project_name
+    kotlin_package = web_root / "src/main/kotlin/com/youzan/cloud" / build_package_path(package_name)
     create_dir_if_absent(kotlin_package, args.dry_run, changed)
-    create_project_scaffold(kotlin_package, project_name, args.dry_run, changed)
+    create_project_scaffold(kotlin_package, project_name, package_name, args.dry_run, changed)
 
     update_env(
         root,
@@ -1286,6 +1304,7 @@ def main() -> int:
         web_root / "src/main/resources/generatorConfig.xml",
         GENERATOR_TEMPLATE.format(
             project_name=project_name,
+            package_name=package_name,
             mysql_host=MYSQL_HOST,
             mysql_port=MYSQL_PORT,
             mysql_username=MYSQL_USERNAME,
@@ -1297,7 +1316,7 @@ def main() -> int:
     )
     update_gitignore(root, args.dry_run, changed)
 
-    create_vibe_coding_workspace(root, project_name, web_module, args.dry_run, changed)
+    create_vibe_coding_workspace(root, project_name, web_module, build_package_path(package_name), args.dry_run, changed)
 
     print_changed_paths(changed)
     return 0
