@@ -35,6 +35,7 @@
 
 - private方法必须添加方法描述，代码行中核心的方法调用应添加简要明了的注释描述 `// 业务约定....`，但不要过度添加，比如一行一个注释
 
+- Kotlin 服务统一使用 import com.qingyan.extension.extension.logger 获取 logger，在提交、状态流转、外部调用和失败等关键节点记录
 - 关键业务需要增加日志的打印，合理使用`log.ingo`、`log.error`、`log.warn` 输出关键内容：`log.info("订单支付,请求3方,orderNo:{}\nreqesut:{}",data.orderNo,data.toJSONString())`
 
 - 关于方法的命名规范：
@@ -60,6 +61,14 @@
 
 - 灵活使用 `.apply`、`.run`、`.let`、`.also` 语法糖等其他函数
 - 当 if else 中业务代码只有一行时，可以省略`{}`
+
+### 数据模型（pojo/model）持久化实现规范
+
+MyBatis Generator 配置文件为 {项目名称}-web/src/main/resources/generatorConfig.xml。
+MyBatis Generator 代码生成（生成 Kotlin model/mapper，需在 {项目名称}-web 目录）
+```shell
+cd {项目名称}-web && mvn mybatis-generator:generate
+```
 
 ### 动态SQL使用
 
@@ -94,6 +103,33 @@ val roleIds = userRoleRelMapper.select {
 }
 
 ```
+
+## 前端
+
+### 开发前必读
+开发前需要先阅读 docs/前端开发文档.md，并按照其中的开放框架、页面配置、组件使用和代码规范执行。涉及具体开放场景、API、插槽或多端组件时，还需要通过https://doc.youzanyun.com/llms.txt继续查阅该文档要求的对应资料。
+
+### 项目概览
+- 本项目是有赞消费者端定制项目，使用 Vue 与 Tee 多端框架，支持 H5 和微信小程序。
+- src/app.js 是应用级定制入口，src/app.json 是应用级配置入口。
+- src/api/sdk.gen.js 存放接口请求与生成的 SDK 代码。
+- src/components/ 存放可复用的自定义表单、富文本等组件。
+- src/utils/ 存放通用工具、生命周期钩子和状态管理代码。
+- 消费端开发目录 {项目名称}-ui/cloud/client (开发消费端前注意阅读 cloud-client 目录下的 README.md 文件，了解项目架构) 
+- 有赞店铺后台页面开发目录 {项目名称}-ui/vite-admin-page 供应商独立后台页面开发目录 {项目名称}-ui/vite-supplier-page
+
+### 常用命令
+- `yarn openapi`：根据配置生成 API 类型与 SDK 代码。
+
+### 修改约定
+- 遵循现有 JavaScript、Vue、SCSS 和 JSON 的代码风格，优先复用已有组件与工具。
+- 修改页面、应用配置或开放能力前，先确认 docs/前端开发文档.md 中对应的页面 key、配置格式、平台支持和 API 约束。
+- 完成修改后，针对变更范围运行合适的构建、检查或测试命令。
+
+### 前后端并行开发约定
+
+- 消费端 API 非特殊情况不得手写。后端先确定接口契约并提供 Swagger，前端使用 `npm run openapi` 生成 src/api/sdk.gen.js 及类型文件后再对接，不直接编辑生成文件.
+- 并行开发时先通过前后端约定字段、路径、错误码和状态流转，页面可以先写逻辑和 mock 数据，但不要单独创建消费端 API 文件； 如确有特殊 API 不能通过 OpenAPI 生成，必须先向用户说明原因并确认方案。
 
 ## 最终目标
 
