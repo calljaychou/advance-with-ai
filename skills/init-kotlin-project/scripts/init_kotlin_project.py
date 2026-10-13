@@ -577,7 +577,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice
  * response 包装器
  * 禁止范围为全局，必须指定basePackages
  */
-@RestControllerAdvice(basePackages = [\"com.youzan.cloud.__PACKAGE__.controller\"])
+@RestControllerAdvice(basePackages = [\"__PACKAGE__.controller\"])
 class GlobalControllerResponseHandler : ResponseBodyAdvice<Any?> {
 
     override fun supports(returnType: MethodParameter, converterType: Class<out HttpMessageConverter<*>>) =
