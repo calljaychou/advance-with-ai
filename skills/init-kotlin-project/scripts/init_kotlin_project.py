@@ -94,6 +94,7 @@ __WEB_MODULE__/src/main/
 ## 规则约束
 -  若非用户说明，不要执行mvn命令、编译操作
 -  遇到不确定或复杂问题、选择上的问题时，主动与开发人员沟通，而非自行决策，提供可能的选项供开发人员选择
+-  涉及服务端有赞扩展点、消息、开放 API 等平台能力，或任何消费端开发时，必须在方案设计和编码前，根据具体需求先从 https://doc.youzanyun.com/llms.txt 检索并查阅对应的有赞云能力文档，确认能力是否支持、接入方式、参数与数据结构、平台差异及使用限制；不得仅凭已有经验或项目现状推断平台能力
 
 ## 编码规范
 - 框架工具：优先使用 Spring MVC 的 @Controller（用于页面渲染）或 @RestController（用于返回 JSON/API 响应），并结合请求映射注解（例如，@GetMapping、@PostMapping）。
@@ -1041,12 +1042,16 @@ ENV_KEYS = {
     "spring.redis.host",
     "spring.redis.port",
     "cloud.idempotent.redis.enabled",
+    "mysql.host",
     "mysql.username",
     "mysql.password",
     "druid.datasource.driverClassName",
     "druid.datasource.url",
     "druid.datasource.username",
     "druid.datasource.password",
+    "mybatis.basePackage",
+    "mybatis.typeAliasesPackage",
+    "mybatis.mapperLocations",
     "mybatis.configuration.logImpl",
     "extension.rootKdtId",
     "isv.oauth.url",
@@ -1188,7 +1193,7 @@ def create_project_scaffold(kotlin_package: Path, project_name: str, package_nam
         )
 
 
-def env_block(project_name: str, client_id: str, client_secret: str) -> str:
+def env_block(project_name: str, package_name: str, client_id: str, client_secret: str) -> str:
     return f"""#opensdk
 opensdk.clientId={client_id}
 opensdk.clientSecret={client_secret}
@@ -1207,13 +1212,18 @@ spring.redis.port=6379
 cloud.idempotent.redis.enabled=true
 
 #mysql
+mysql.host={MYSQL_HOST}
 mysql.username={MYSQL_USERNAME}
 mysql.password={MYSQL_PASSWORD}
 druid.datasource.driverClassName=com.mysql.jdbc.Driver
-druid.datasource.url=jdbc:mysql://{MYSQL_HOST}:{MYSQL_PORT}/{project_name}?characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+druid.datasource.url=jdbc:mysql://${{mysql.host}}:{MYSQL_PORT}/{project_name}?characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
 druid.datasource.username=${{mysql.username}}
 druid.datasource.password=${{mysql.password}}
 
+#mybatis
+mybatis.basePackage=com.youzan.cloud.{package_name}.dal.mapper
+mybatis.typeAliasesPackage=com.youzan.cloud.{package_name}.dal.model
+mybatis.mapperLocations=classpath:mapper/*.xml,classpath*:mybatis/mapper/*.xml
 mybatis.configuration.logImpl=org.apache.ibatis.logging.stdout.StdOutImpl
 
 extension.rootKdtId=
@@ -1286,7 +1296,7 @@ def print_changed_paths(changed: list[str]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Initialize a Youzan/Qingyan Kotlin Spring Maven project.")
     parser.add_argument("--project-root", default=".", help="Project root directory.")
-    parser.add_argument("--project-name", help="Project name used for module names and database name.")
+    parser.add_argument("--project-name", help="Project name used for module names, database name, and default package name.")
     parser.add_argument("--package-name", help="Kotlin package name, defaults to project name with '-' replaced by '.'.")
     parser.add_argument("--web-module", help="Web module directory name.")
     parser.add_argument("--client-id", help="OpenSDK clientId.")
@@ -1377,7 +1387,7 @@ def main() -> int:
 
     update_env(
         root,
-        env_block(project_name, client_id, client_secret),
+        env_block(project_name, package_name, client_id, client_secret),
         args.dry_run,
         changed,
     )

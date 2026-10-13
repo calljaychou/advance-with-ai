@@ -1,6 +1,6 @@
 ---
 name: init-kotlin-project
-description: Initialize or reset a Youzan/Qingyan Kotlin Spring Boot Maven project using the local QY style. Use when the user asks to initialize a Kotlin project, remove api/biz/dal/deploy submodules, configure root and web POMs, add .ENV OpenSDK/MySQL/Redis settings, add MyBatis Generator config, create Kotlin package directories and common base files, and create a docs workspace containing the consumer and admin development guides plus a root AGENTS.md.
+description: Initialize or reset a Youzan/Qingyan Kotlin Spring Boot Maven project using the local QY style. Use when the user asks to initialize a Kotlin project, remove api/biz/dal/deploy submodules, configure root and web POMs, add .ENV OpenSDK/MySQL/Redis/MyBatis settings, add MyBatis Generator config, create Kotlin package directories and common base files, and create a docs workspace containing the consumer and admin development guides plus a root AGENTS.md.
 ---
 
 # Init Kotlin Project
@@ -47,7 +47,7 @@ If any required value is omitted, the script prompts interactively in the requir
 
 Useful options:
 
-- `--project-name <name>`: override the project name used for module names and database name.
+- `--project-name <name>`: override the project name used for module names, database name, and the default package name.
 - `--package-name <name>`: override the Kotlin package name. Defaults to the project name with `-` replaced by `.`.
 - `--web-module <module>`: override the web module directory. Defaults to `<project-name>-web`, or the single existing `*-web` module.
 - `--qy-extension-version <version>`: override the default QY extension package version `0.0.9-SNAPSHOT`.
@@ -62,7 +62,7 @@ Useful options:
 - Remove `src/main/java/com/youzan/cloud/<package-path>/web`.
 - Create `src/main/kotlin/com/youzan/cloud/<package-path>` package scaffolding: `common`, `controller`, `dal`, `model`, `service`, `thirdside`, and `youzanopen`. `<package-path>` 由项目名把 `-` 换成 `.` 再换成目录 `/` 得到，例如 `yf-brp` → `yf/brp`。
 - Create common base files under `common`: extension helpers, result handler annotation, CORS, Env, global exception/response handlers, and Swagger config.
-- Update root `.ENV` with OpenSDK, escrow token, Redis, idempotent, MySQL, MyBatis log, OAuth, and Swagger settings.
+- Update root `.ENV` with OpenSDK, escrow token, Redis, idempotent, MySQL, MyBatis mapper/package/log, OAuth, and Swagger settings.
 - Copy the bundled `mysql-connector-java-8.0.19.jar` to `src/main/resources`.
 - Add `src/main/resources/generatorConfig.xml`, using the bundled resources jar as its `classPathEntry`.
 - Add `**/src/main/resources/generatorConfig.xml` to the root `.gitignore`.
@@ -73,6 +73,6 @@ The script copies the bundled consumer and admin development guides to `docs/消
 ## Notes
 
 - The script intentionally keeps `artifactId`, `groupId`, and `version` from existing POMs when possible.
-- The database name defaults to the project name.
+- The database name is derived from `--project-name`, for example `isho`.
 - MySQL is fixed to `192.168.2.111:3306`, with username `root` and password `123456`.
 - It never runs Maven or compilation.
