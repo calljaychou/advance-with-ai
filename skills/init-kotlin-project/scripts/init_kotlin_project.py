@@ -431,7 +431,7 @@ class CORSConfig {
 import org.springframework.stereotype.Component
 
 @Component
-class Env {
+class Env: ExtensionEnv() {
 
 
 
