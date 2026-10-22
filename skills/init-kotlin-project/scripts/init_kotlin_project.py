@@ -1054,7 +1054,8 @@ ENV_KEYS = {
     "mybatis.mapperLocations",
     "mybatis.configuration.logImpl",
     "extension.rootKdtId",
-    "isv.oauth.url",
+    "extension.auth.manage.youzanIsvTokenResolverUrl",
+    "extension.auth.manage.enable",
     "swagger.enable",
 }
 
@@ -1228,7 +1229,9 @@ mybatis.configuration.logImpl=org.apache.ibatis.logging.stdout.StdOutImpl
 
 extension.rootKdtId=
 
-isv.oauth.url=https://oauth.isv-dev.youzan.com
+#定制 manageAuth配置
+extension.auth.manage.youzanIsvTokenResolverUrl=https://oauth.isv-dev.youzan.com
+extension.auth.manage.enable=true
 
 swagger.enable=true
 """
