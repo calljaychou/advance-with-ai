@@ -1,0 +1,4 @@
+# dsh-skill-hub bundle patch: mount the host plugin (root export = lib/index.js).
+- insert:
+    - id: skill-hub
+      name: 'dsh-skill-hub'
