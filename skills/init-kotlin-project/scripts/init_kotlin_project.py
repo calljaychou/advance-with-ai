@@ -1195,7 +1195,10 @@ def create_project_scaffold(kotlin_package: Path, project_name: str, package_nam
 
 
 def env_block(project_name: str, package_name: str, client_id: str, client_secret: str) -> str:
-    return f"""#opensdk
+    return f"""#本地请求有赞云配置
+youzan_proxy_enable=false
+
+#opensdk
 opensdk.clientId={client_id}
 opensdk.clientSecret={client_secret}
 
