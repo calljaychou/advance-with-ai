@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 
-DEFAULT_QY_EXTENSION_VERSION = "0.0.9-SNAPSHOT"
+DEFAULT_QY_EXTENSION_VERSION = "0.1.0-SNAPSHOT"
 MYSQL_HOST = "192.168.2.111"
 MYSQL_PORT = 3306
 MYSQL_USERNAME = "root"
